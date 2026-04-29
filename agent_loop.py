@@ -70,9 +70,13 @@ def agent_runner_loop(client, system_prompt, user_input, handler, tools_schema,
         for ii, tc in enumerate(tool_calls):
             tool_name, args, tid = tc['tool_name'], tc['args'], tc.get('id', '')
             if tool_name == 'no_tool': pass
-            else: 
+            else:
                 if verbose: yield f"🛠️ Tool: `{tool_name}`  📥 args:\n````text\n{get_pretty_json(args)}\n````\n"
                 else: yield f"🛠️ {tool_name}({_compact_tool_args(tool_name, args)})\n\n\n"
+                # Emit tool start event
+                tool_event = {'tool_event': {'type': 'tool_start', 'tool': tool_name, 'input': args, 'id': tid or f'tool_{turn}_{ii}'}}
+                print(f"[DEBUG agent_loop] Yielding tool_start event: {tool_event}", flush=True)
+                yield tool_event
             handler.current_turn = turn
             gen = handler.dispatch(tool_name, args, response, index=ii, tool_num=len(tool_calls))
             try:
@@ -82,14 +86,21 @@ def agent_runner_loop(client, system_prompt, user_input, handler, tools_schema,
                 outcome = (yield from proxy()) if verbose else exhaust(proxy())
                 if verbose: yield '`````\n'
             except StopIteration as e: outcome = e.value
-            
-            if outcome.should_exit: 
+
+            # Emit tool done event
+            if tool_name != 'no_tool':
+                tool_status = 'error' if outcome.next_prompt and outcome.next_prompt.startswith('未知工具') else 'completed'
+                tool_event = {'tool_event': {'type': 'tool_done', 'tool': tool_name, 'id': tid or f'tool_{turn}_{ii}', 'output': outcome.data, 'status': tool_status, 'metadata': {}}}
+                print(f"[DEBUG agent_loop] Yielding tool_done event: {tool_event}", flush=True)
+                yield tool_event
+
+            if outcome.should_exit:
                 exit_reason = {'result': 'EXITED', 'data': outcome.data}; break
-            if not outcome.next_prompt: 
+            if not outcome.next_prompt:
                 exit_reason = {'result': 'CURRENT_TASK_DONE', 'data': outcome.data}; break
             if outcome.next_prompt.startswith('未知工具'): client.last_tools = ''
-            if outcome.data is not None and tool_name != 'no_tool': 
-                datastr = json.dumps(outcome.data, ensure_ascii=False, default=json_default) if type(outcome.data) in [dict, list] else str(outcome.data) 
+            if outcome.data is not None and tool_name != 'no_tool':
+                datastr = json.dumps(outcome.data, ensure_ascii=False, default=json_default) if type(outcome.data) in [dict, list] else str(outcome.data)
                 tool_results.append({'tool_use_id': tid, 'content': datastr})
             next_prompts.add(outcome.next_prompt)
         if len(next_prompts) == 0 or exit_reason:

@@ -148,13 +148,16 @@ class GenericAgent:
             try:
                 full_resp = ""; last_pos = 0; curr_turn = 0; turn_resps = []
                 for chunk in gen:
-                    if consume_file(self.task_dir, '_stop'): self.abort() 
+                    if consume_file(self.task_dir, '_stop'): self.abort()
                     if self.stop_sig: break
-                    if isinstance(chunk, dict) and 'turn' in chunk: 
+                    if isinstance(chunk, dict) and 'tool_event' in chunk:
+                        print(f"[DEBUG agentmain] Received tool_event, putting to display_queue: {chunk}", flush=True)
+                        display_queue.put(chunk); continue
+                    if isinstance(chunk, dict) and 'turn' in chunk:
                         curr_turn = chunk['turn']; turn_resps.append(''); continue
                     full_resp += chunk;  turn_resps[-1] += chunk
                     if len(full_resp) - last_pos > 30 or 'LLM Running' in chunk:
-                        display_queue.put({'next': full_resp[last_pos:] if self.inc_out else full_resp, 
+                        display_queue.put({'next': full_resp[last_pos:] if self.inc_out else full_resp,
                                            'source': source, 'turn': curr_turn, 'outputs': turn_resps[-2:]})
                         last_pos = len(full_resp)
                 if self.inc_out and last_pos < len(full_resp): display_queue.put({'next': full_resp[last_pos:], 'source': source, 
