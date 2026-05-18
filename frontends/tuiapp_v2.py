@@ -1416,6 +1416,41 @@ class InputArea(TextArea):
         self._insert_via_keyboard(marker)
         return True
 
+    def _at_token_at_cursor(self) -> Optional[tuple[str, int, int, int]]:
+        """If the cursor sits inside an `@<path>` token, return
+        ``(token, row, start_col, end_col)``; otherwise ``None``.
+
+        Trigger conditions:
+        - '@' is at start-of-line or preceded by whitespace.
+        - The chars between '@' and the cursor contain no whitespace.
+        - No active text selection.
+        """
+        try:
+            sel_start, sel_end = self.selection
+            if sel_start != sel_end:
+                return None
+        except Exception:
+            pass
+        row, col = self.cursor_location
+        try:
+            line = self.document.get_line(row)
+        except Exception:
+            try:
+                line = self.text.split("\n")[row]
+            except IndexError:
+                return None
+        i = col - 1
+        while i >= 0 and not line[i].isspace():
+            if line[i] == "@":
+                if i == 0 or line[i - 1].isspace():
+                    token = line[i + 1: col]
+                    if "@" in token:
+                        return None
+                    return (token, row, i, col)
+                return None
+            i -= 1
+        return None
+
     async def _on_key(self, event: events.Key) -> None:
         # 1) command palette routing
         try:
@@ -1856,6 +1891,7 @@ class GenericAgentTUI(App[None]):
         self._started_at: float = time.time()
         self._ids = count(1)
         self._suppress_palette_open = False
+        self._at_token_range: Optional[tuple[int, int, int]] = None
         self.fold_mode: bool = True
         self._last_size: tuple[int, int] = (-1, -1)
         self._resize_timer = None
@@ -2471,8 +2507,16 @@ class GenericAgentTUI(App[None]):
         if first_line.startswith("/") and " " not in first_line and "\n" not in val:
             self._populate_palette(first_line)
             self._show_palette()
-        else:
-            self._hide_palette()
+            return
+        # @-file completion: detect an @-token under the cursor.
+        at_hit = inp._at_token_at_cursor()
+        if at_hit is not None:
+            token, row, start, end = at_hit
+            self._at_token_range = (row, start, end)
+            self._populate_palette_at(token)
+            return
+        self._at_token_range = None
+        self._hide_palette()
 
     def _resize_input(self, inp: TextArea) -> None:
         # wrapped_document.height counts soft-wrapped lines; document.line_count only logical.
@@ -2529,10 +2573,97 @@ class GenericAgentTUI(App[None]):
             t.append(f"  {desc}")
             palette.add_option(Option(t, id=cmd))
 
+    def _populate_palette_at(self, token: str) -> None:
+        """Populate the palette with filesystem entries matching the `@<token>` prefix.
+
+        Token may contain '/'; the part up to (and including) the last '/' is the
+        directory to list, and the remainder is the basename prefix filter.
+        Listing is rooted at the user's cwd (GA_USER_CWD is already chdir'd into).
+        """
+        palette = self.query_one("#palette", OptionList)
+        palette.clear_options()
+        slash = token.rfind("/")
+        if slash >= 0:
+            dir_part = token[: slash + 1]
+            prefix = token[slash + 1:]
+        else:
+            dir_part = ""
+            prefix = token
+        listing_base = dir_part or "."
+        try:
+            expanded = os.path.expanduser(listing_base)
+            listing_dir = expanded if os.path.isabs(expanded) else os.path.abspath(expanded)
+            entries = os.listdir(listing_dir)
+        except OSError:
+            self._hide_palette()
+            return
+        pfx_lower = prefix.lower()
+        show_hidden = prefix.startswith(".")
+        items: list[tuple[bool, str]] = []
+        for name in entries:
+            if not show_hidden and name.startswith("."):
+                continue
+            if pfx_lower and not name.lower().startswith(pfx_lower):
+                continue
+            try:
+                is_dir = os.path.isdir(os.path.join(listing_dir, name))
+            except OSError:
+                is_dir = False
+            items.append((is_dir, name))
+        items.sort(key=lambda it: (not it[0], it[1].lower()))
+        items = items[:50]
+        if not items:
+            self._hide_palette()
+            return
+        for is_dir, name in items:
+            display_name = name + ("/" if is_dir else "")
+            full = dir_part + display_name
+            t = Text()
+            t.append("📁 " if is_dir else "📄 ", style="bold")
+            t.append(display_name)
+            palette.add_option(Option(t, id=f"at:{full}"))
+        # Auto-highlight the first option so Enter (routed from InputArea) selects it
+        # without an explicit Down keypress.
+        try:
+            palette.highlighted = 0
+        except Exception:
+            pass
+        self._show_palette()
+
     def on_option_list_option_selected(self, event: OptionList.OptionSelected) -> None:
         ol = event.option_list
         if ol.id == "palette":
             cmd_id = event.option.id
+            if cmd_id and cmd_id.startswith("at:"):
+                path = cmd_id[3:]
+                rng = self._at_token_range
+                if rng is not None:
+                    row, start, end = rng
+                    inp = self.query_one("#input", InputArea)
+                    new_text = "@" + path
+                    try:
+                        inp.replace(new_text, (row, start), (row, end))
+                    except Exception:
+                        # Defensive fallback: reset line content explicitly.
+                        try:
+                            line = inp.document.get_line(row)
+                        except Exception:
+                            line = inp.text.split("\n")[row]
+                        rebuilt = line[:start] + new_text + line[end:]
+                        lines = inp.text.split("\n")
+                        lines[row] = rebuilt
+                        inp.text = "\n".join(lines)
+                    inp.move_cursor((row, start + len(new_text)))
+                    inp.focus()
+                    if not path.endswith("/"):
+                        self._at_token_range = None
+                        # Suppress the re-entrant TextArea.Changed event that the
+                        # replace() above will emit; without this the cursor would
+                        # still sit inside an `@...` token and the palette would
+                        # immediately pop back up.
+                        self._suppress_palette_open = True
+                        self._hide_palette()
+                return
             if cmd_id:
                 inp = self.query_one("#input", InputArea)
                 needs_args = any(c[1] for c in COMMANDS if c[0] == cmd_id)
