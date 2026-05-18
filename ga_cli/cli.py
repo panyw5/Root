@@ -33,10 +33,16 @@ def launch_frontend(cmd_parts, args=None):
     if args:
         full_cmd.extend(args)
 
+    # Preserve the user's invocation directory for frontends that need it
+    # (e.g. TUI's @file picker). Bash/cmd wrappers may have already set this;
+    # otherwise capture the current cwd before we chdir into PROJECT_DIR.
+    env = os.environ.copy()
+    env.setdefault("GA_USER_CWD", os.getcwd())
+
     print(f"🚀 {' '.join(full_cmd)}")
     sys.stdout.flush()
     os.chdir(PROJECT_DIR)
-    proc = subprocess.Popen(full_cmd)
+    proc = subprocess.Popen(full_cmd, env=env)
     try:
         proc.wait()
     except KeyboardInterrupt:
@@ -61,8 +67,13 @@ COMMANDS = {
         "cmd": ["python", "{PROJECT_DIR}/hub.pyw"],
     },
     "tui": {
-        "help": "启动终端 TUI (tuiapp)",
-        "desc": "启动终端图形界面（Textual），适合纯终端环境或 SSH",
+        "help": "启动终端 TUI (tuiapp_v2)",
+        "desc": "启动终端图形界面（Textual v2，含 /btw /continue /export /restore），适合纯终端环境或 SSH",
+        "cmd": ["python", "{FRONTENDS}/tuiapp_v2.py"],
+    },
+    "tui-legacy": {
+        "help": "启动旧版终端 TUI (tuiapp)",
+        "desc": "启动旧版 Textual TUI（保留用于回退/调试）",
         "cmd": ["python", "{FRONTENDS}/tuiapp.py"],
     },
     "cli": {

@@ -48,6 +48,18 @@ ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if ROOT_DIR not in sys.path:
     sys.path.insert(0, ROOT_DIR)
 
+# Honor the original invocation directory so users can launch the TUI from any
+# folder (e.g. `ga tui` inside a project). The `ga` shell wrapper / ga_cli set
+# GA_USER_CWD before chdir-ing into PROJECT_DIR. We re-enter that directory so
+# the TUI's working directory (used by @file picker, relative paths, etc.) is
+# what the user expected, without breaking imports that target the project root.
+_user_cwd = os.environ.get("GA_USER_CWD")
+if _user_cwd and os.path.isdir(_user_cwd):
+    try:
+        os.chdir(_user_cwd)
+    except OSError:
+        pass
+
 AgentFactory = Callable[[], Any]
 
 

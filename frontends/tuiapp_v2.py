@@ -592,6 +592,16 @@ FRONTENDS_DIR = os.path.dirname(os.path.abspath(__file__))
 if FRONTENDS_DIR not in sys.path:
     sys.path.insert(0, FRONTENDS_DIR)
 
+# Honor the original invocation directory so users can launch the TUI from any
+# folder. ga_cli sets GA_USER_CWD before chdir-ing into PROJECT_DIR; we restore
+# it here AFTER sys.path is set so imports still resolve from the project root.
+_user_cwd = os.environ.get("GA_USER_CWD")
+if _user_cwd and os.path.isdir(_user_cwd):
+    try:
+        os.chdir(_user_cwd)
+    except OSError:
+        pass
+
 # Side-effect imports activate /btw + /continue monkey-patches.
 import chatapp_common  # noqa: F401
 from chatapp_common import format_restore
