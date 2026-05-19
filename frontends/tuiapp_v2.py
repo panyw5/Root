@@ -792,10 +792,22 @@ Screen { background: $ga-bg; color: $ga-fg; }
     width: 34;
     height: 100%;
     background: $ga-bg;
-    padding: 1 2;
     border-right: solid $ga-alt-bg;
+    /* Hide the scrollbar; the wheel still scrolls. Keeps the original look. */
+    scrollbar-size: 0 0;
+    scrollbar-background: $ga-bg;
+    scrollbar-color: $ga-bg;
 }
 #sidebar.-hidden, #sidebar.-narrow { display: none; }
+
+/* Padding lives on the inner content so the click-to-select math
+   (which subtracts header rows) stays correct regardless of scroll. */
+#sidebar-content {
+    width: 100%;
+    height: auto;
+    background: $ga-bg;
+    padding: 1 2;
+}
 
 #main {
     height: 100%;
@@ -1948,7 +1960,11 @@ class GenericAgentTUI(App[None]):
     def compose(self) -> ComposeResult:
         yield Static("", id="topbar")
         with Horizontal(id="body"):
-            yield Static("", id="sidebar")
+            # Wrap the sidebar Static in a VerticalScroll so the session list
+            # responds to the mouse wheel when there are more sessions than fit
+            # on screen. The inner #sidebar-content holds the rendered Table.
+            with VerticalScroll(id="sidebar"):
+                yield Static("", id="sidebar-content")
             with Vertical(id="main"):
                 yield VerticalScroll(id="messages")
                 yield Static("", id="planbar")
@@ -2220,7 +2236,7 @@ class GenericAgentTUI(App[None]):
         # via a short timer (call_after_refresh alone races the layout and the
         # remount can capture the old content_region.width — leaving messages
         # wrapped at the previous width after Ctrl+B).
-        sidebar = self.query_one("#sidebar", Static)
+        sidebar = self.query_one("#sidebar", VerticalScroll)
         sidebar.toggle_class("-hidden")
         for sess in self.sessions.values():
             for m in sess.messages:
@@ -2417,12 +2433,15 @@ class GenericAgentTUI(App[None]):
             self._remount_assistant_message(msg)
             return
         try:
-            sidebar = self.query_one("#sidebar", Static)
+            sidebar_content = self.query_one("#sidebar-content", Static)
         except Exception:
             return
-        if event.widget is not sidebar:
+        if event.widget is not sidebar_content:
             return
-        # event.y is widget-local (includes padding-top=1). Layout: pad + "SESSIONS" + blank.
+        # event.y is widget-local to #sidebar-content (includes padding-top=1).
+        # Layout: pad + "SESSIONS" + blank. Since the Static holds the full
+        # content (the VerticalScroll wraps it), event.y already reflects the
+        # logical row clicked regardless of scroll position.
         y = event.y - 3
         if y < 0:
             return
@@ -2457,7 +2476,7 @@ class GenericAgentTUI(App[None]):
 
     def _apply_responsive_layout(self) -> None:
         try:
-            sidebar = self.query_one("#sidebar", Static)
+            sidebar = self.query_one("#sidebar", VerticalScroll)
             main = self.query_one("#main", Vertical)
         except Exception:
             return
@@ -3972,7 +3991,7 @@ class GenericAgentTUI(App[None]):
 
     def _refresh_sidebar(self):
         if not self.is_mounted: return
-        self.query_one("#sidebar", Static).update(render_sidebar(self.sessions, self.current_id))
+        self.query_one("#sidebar-content", Static).update(render_sidebar(self.sessions, self.current_id))
 
     def _at_bottom(self, container) -> bool:
         try:
