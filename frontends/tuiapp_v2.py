@@ -833,7 +833,9 @@ Screen { background: $ga-bg; color: $ga-fg; }
 
 #main {
     height: 100%;
-    padding: 1 6;
+    /* T R B L — bottom=0 so the Tip row sits flush above the terminal edge
+       (or the armed #bottombar), reclaiming one row of vertical space. */
+    padding: 1 6 0 6;
     background: $ga-bg;
 }
 
@@ -2503,7 +2505,8 @@ class GenericAgentTUI(App[None]):
         else:
             sidebar.remove_class("-narrow")
             sidebar.styles.width = max(30, min(50, w // 5))
-        main.styles.padding = (1, 2) if w < 90 else (1, 6)
+        # (T, R, B, L) — keep bottom=0 in sync with the #main CSS rule above.
+        main.styles.padding = (1, 2, 0, 2) if w < 90 else (1, 6, 0, 6)
         # Padding changes recompute layout asynchronously — defer remount one frame.
         self.call_after_refresh(self._remount_current_session)
 
