@@ -154,15 +154,26 @@ def _random_tip(exclude: str = "") -> str:
 
 
 def _tip_line(text: str = ""):
-    """`└ Tip: …` as styled Rich Text; empty `text` → blank pulse line."""
+    """`└ Tip: …` (left) + `Ctrl+/ 快捷键帮助` (right) as a two-column grid.
+
+    Empty `text` keeps the left side blank (blank pulse during rotation) but
+    still shows the persistent hotkey hint on the right so the row never
+    appears to flicker out completely.
+    """
     from rich.text import Text as _T
-    t = _T()
-    if not text:
-        return t
-    t.append("└ ", style="#6e7681")
-    t.append("Tip: ", style="bold #6e7681")
-    t.append(text.removeprefix("Tip: "), style="#6e7681")
-    return t
+    left = _T()
+    if text:
+        left.append("└ ", style="#6e7681")
+        left.append("Tip: ", style="bold #6e7681")
+        left.append(text.removeprefix("Tip: "), style="#6e7681")
+    right = _T()
+    right.append("Ctrl+/", style=C_GREEN)
+    right.append(" 快捷键帮助", style="#6e7681")
+    grid = Table.grid(expand=True)
+    grid.add_column(justify="left", ratio=1)
+    grid.add_column(justify="right", no_wrap=True)
+    grid.add_row(left, right)
+    return grid
 
 # Defensive cleaners for ask_user candidates. The model occasionally smuggles
 # JSON envelope debris (`"}`, `]`, `\`) in or out of a candidate string, or
@@ -780,11 +791,22 @@ def _palette_from_resolved_vars(v: dict[str, str], dark: bool) -> dict[str, str]
 _MAIN_CSS = """
 Screen { background: $ga-bg; color: $ga-fg; }
 
-#topbar, #bottombar {
+#topbar {
     height: 1;
     background: $ga-bg;
     padding: 0 2;
 }
+
+/* Bottom bar only surfaces transient "press again" prompts. It collapses
+   to zero height by default so the input area sits flush against the
+   terminal bottom; `_refresh_bottombar` toggles the `.armed` class when
+   Ctrl+C / Esc need a confirm step. */
+#bottombar {
+    height: 0;
+    background: $ga-bg;
+    padding: 0 2;
+}
+#bottombar.armed { height: 1; }
 
 #body { height: 1fr; }
 
@@ -1647,6 +1669,8 @@ def render_topbar(session_name: str, status: str, model: str, tasks_running: int
 
 
 def render_bottombar(quit_armed: bool = False, rewind_armed: bool = False) -> Table:
+    # Hotkey hints now live next to the Tip line; this row only surfaces the
+    # transient "press again to confirm" prompts and stays empty otherwise.
     t = Table.grid(expand=True)
     t.add_column(justify="left")
     left = Text()
@@ -1654,15 +1678,6 @@ def render_bottombar(quit_armed: bool = False, rewind_armed: bool = False) -> Ta
         left.append("再按 Ctrl+C 退出", style=f"bold {C_GREEN}")
     elif rewind_armed:
         left.append("再按 Esc 回退", style=f"bold {C_GREEN}")
-    else:
-        pairs = [("Enter", "发送"), ("Ctrl+N", "新会话"),
-                 ("Ctrl+B", "侧栏"), ("Ctrl+C", "停止/退出"),
-                 ("/", "命令面板"), ("Ctrl+/", "快捷键帮助")]
-        for i, (k, d) in enumerate(pairs):
-            if i: left.append("    ")
-            left.append(k, style=C_GREEN if k in ("/", "Ctrl+/") else C_FG)
-            left.append(" ")
-            left.append(d, style=C_MUTED)
     t.add_row(left)
     return t
 
@@ -3982,10 +3997,15 @@ class GenericAgentTUI(App[None]):
     def _refresh_bottombar(self):
         if not self.is_mounted: return
         try:
-            self.query_one("#bottombar", Static).update(render_bottombar(
+            bar = self.query_one("#bottombar", Static)
+            bar.update(render_bottombar(
                 quit_armed=self._quit_armed,
                 rewind_armed=self._rewind_armed,
             ))
+            # Toggle the `.armed` class so CSS can collapse the row when no
+            # confirm prompt is showing, letting the input area sit flush
+            # against the terminal bottom.
+            bar.set_class(bool(self._quit_armed or self._rewind_armed), "armed")
         except Exception:
             pass
 
