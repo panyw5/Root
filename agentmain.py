@@ -36,6 +36,26 @@ if not os.path.exists(cdp_cfg):
 def get_system_prompt():
     with open(os.path.join(script_dir, f'assets/sys_prompt{lang_suffix}.txt'), 'r', encoding='utf-8') as f: prompt = f.read()
     prompt += f"\nToday: {time.strftime('%Y-%m-%d %a')}\n"
+    # Tell the model where the user actually invoked the agent from.
+    # tuiapp_v2 / ga_cli already os.chdir() into GA_USER_CWD, so os.getcwd()
+    # reflects the user's launch directory (e.g. ~/apps/opencode), not the
+    # GenericAgent source tree. Without this hint the model treats the
+    # framework's own memory/global_mem.txt paths as "the current project".
+    try:
+        user_cwd = os.path.abspath(os.environ.get('GA_USER_CWD') or os.getcwd())
+    except Exception:
+        user_cwd = os.getcwd()
+    if user_cwd and os.path.abspath(user_cwd) != os.path.abspath(script_dir):
+        prompt += (
+            f"\n[Session Workspace]\n"
+            f"User launched the agent from: {user_cwd}\n"
+            f"This is THIS session's active working directory; the Python process cwd is already chdir'd here. "
+            f"Treat it as the user's current project root: resolve relative paths, list/read files, and answer "
+            f"\"what is the current project\" based on this directory.\n"
+            f"NOTE: GenericAgent's own source tree lives at {script_dir}; memory entries that mention paths like "
+            f"'../memory', 'GA CodeRoot', or example cwd strings describe the agent framework itself, not the user's project. "
+            f"Do not assume the user is working on GenericAgent unless they say so or {script_dir} == the launch dir above.\n"
+        )
     prompt += get_global_memory()
     return prompt
 
