@@ -2799,7 +2799,15 @@ class GenericAgentTUI(App[None]):
                 if rng is not None:
                     row, start, end = rng
                     inp = self.query_one("#input", InputArea)
-                    new_text = "@" + path
+                    # Inject an absolute path so the @-reference resolves
+                    # regardless of where the consumer (agent/tool) interprets
+                    # it. Directory entries keep their trailing slash so the
+                    # palette can re-open for sub-listing.
+                    trailing_slash = path.endswith("/")
+                    abs_path = os.path.abspath(os.path.expanduser(path.rstrip("/"))) if path else path
+                    if trailing_slash and abs_path:
+                        abs_path = abs_path + "/"
+                    new_text = "@" + (abs_path or path)
                     try:
                         inp.replace(new_text, (row, start), (row, end))
                     except Exception:
