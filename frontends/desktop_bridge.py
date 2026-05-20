@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-GenericAgent Web2 Bridge.
+Root Web2 Bridge.
 
 Clear split:
-1) AgentManager: owns GenericAgent instances, sessions and histories.
+1) AgentManager: owns Root instances, sessions and histories.
 2) Transport: HTTP is the command/data channel; WebSocket only pushes small
    session-state notifications.
 
@@ -40,8 +40,8 @@ def find_default_ga_root() -> Path:
     candidates = [
         APP_DIR / "..",
         APP_DIR / ".." / "..",
-        APP_DIR / ".." / "GenericAgent",
-        APP_DIR / ".." / ".." / "GenericAgent",
+        APP_DIR / ".." / "Root",
+        APP_DIR / ".." / ".." / "Root",
     ]
     for p in candidates:
         root = p.resolve()
@@ -102,7 +102,7 @@ class AgentManager:
         try:
             os.chdir(sess.cwd or str(root))
             agentmain = importlib.import_module("agentmain")
-            GA = getattr(agentmain, "GenericAgent")
+            GA = getattr(agentmain, "Root")
             agent = GA()
             agent.inc_out = True
             agent.verbose = True
@@ -116,7 +116,7 @@ class AgentManager:
         self.ensure_ga_import_path()
         try:
             agentmain = importlib.import_module("agentmain")
-            agent = agentmain.GenericAgent()
+            agent = agentmain.Root()
             if hasattr(agent, "list_llms"):
                 return [{"id": i, "name": name, "active": active} for i, name, active in agent.list_llms()]
         except Exception as e:
@@ -240,7 +240,7 @@ class AgentManager:
                 if isinstance(ret, str):
                     full = ret
             else:
-                full = "GenericAgent object has no put_task/run method"
+                full = "Root object has no put_task/run method"
             if not full:
                 full = "(completed)"
             if sess.cancel_requested:
@@ -609,5 +609,5 @@ def create_app():
 if __name__ == "__main__":
     host = os.environ.get("BRIDGE_HOST", "127.0.0.1")
     port = int(os.environ.get("BRIDGE_PORT", "14168"))
-    print(f"GenericAgent Web2 bridge: http://{host}:{port}  ws://{host}:{port}/ws", file=sys.stderr)
+    print(f"Root Web2 bridge: http://{host}:{port}  ws://{host}:{port}/ws", file=sys.stderr)
     web.run_app(create_app(), host=host, port=port, print=None)

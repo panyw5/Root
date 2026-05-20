@@ -1,4 +1,4 @@
-"""Textual terminal UI for GenericAgent.
+"""Textual terminal UI for Root.
 
 Run from the project root:
 
@@ -9,10 +9,10 @@ Useful options:
     python frontends/tuiapp.py --help
 
 MVP design notes:
-- One TUI manages multiple GenericAgent instances.
-- GenericAgent.put_task() returns a per-task display_queue; the TUI records a task_id for every submit.
+- One TUI manages multiple Root instances.
+- Root.put_task() returns a per-task display_queue; the TUI records a task_id for every submit.
 - Agent.run() and display_queue.get() run in daemon threads; UI updates are posted via App.call_from_thread().
-- Multiple sessions may run concurrently, but GenericAgent still shares project temp/memory/tool globals.
+- Multiple sessions may run concurrently, but Root still shares project temp/memory/tool globals.
 """
 from __future__ import annotations
 
@@ -49,11 +49,11 @@ if ROOT_DIR not in sys.path:
     sys.path.insert(0, ROOT_DIR)
 
 # Honor the original invocation directory so users can launch the TUI from any
-# folder (e.g. `ga tui` inside a project). The `ga` shell wrapper / ga_cli set
-# GA_USER_CWD before chdir-ing into PROJECT_DIR. We re-enter that directory so
+# folder (e.g. `rt tui` inside a project). The `rt` shell wrapper / rt_cli set
+# RT_USER_CWD before chdir-ing into PROJECT_DIR. We re-enter that directory so
 # the TUI's working directory (used by @file picker, relative paths, etc.) is
 # what the user expected, without breaking imports that target the project root.
-_user_cwd = os.environ.get("GA_USER_CWD")
+_user_cwd = os.environ.get("RT_USER_CWD")
 if _user_cwd and os.path.isdir(_user_cwd):
     try:
         os.chdir(_user_cwd)
@@ -87,7 +87,7 @@ class AgentSession:
 
 
 def fold_turns(text: str) -> list[dict[str, str]]:
-    """Split GenericAgent turn output into text/fold segments.
+    """Split Root turn output into text/fold segments.
 
     Completed turns become ``{'type': 'fold', 'title': ..., 'content': ...}``.
     The latest/incomplete turn remains ``type='text'`` for streaming refresh.
@@ -169,9 +169,9 @@ def parse_local_command(raw: str) -> tuple[str, list[str]] | None:
 
 
 def default_agent_factory() -> Any:
-    from agentmain import GenericAgent
+    from agentmain import Root
 
-    agent = GenericAgent()
+    agent = Root()
     agent.inc_out = True
     return agent
 
@@ -210,8 +210,8 @@ class PromptInput(TextArea):
             super()._on_key(event)
 
 
-class GenericAgentTUI(App[None]):
-    """Textual app that manages multiple GenericAgent sessions."""
+class RootTUI(App[None]):
+    """Textual app that manages multiple Root sessions."""
 
     CSS = """
     Screen { layout: vertical; }
@@ -255,7 +255,7 @@ class GenericAgentTUI(App[None]):
 
     def on_mount(self) -> None:
         self.add_session("main")
-        self._system("Welcome to GenericAgent TUI. Type /help for commands.")
+        self._system("Welcome to Root TUI. Type /help for commands.")
         self.query_one("#prompt", PromptInput).focus()
 
     def on_resize(self, event) -> None:
@@ -276,7 +276,7 @@ class GenericAgentTUI(App[None]):
         except Exception:
             pass
         session = AgentSession(agent_id=agent_id, name=name or f"agent-{agent_id}", agent=agent)
-        thread = threading.Thread(target=agent.run, name=f"ga-tui-agent-{agent_id}", daemon=True)
+        thread = threading.Thread(target=agent.run, name=f"rt-tui-agent-{agent_id}", daemon=True)
         thread.start()
         session.thread = thread
         self.sessions[agent_id] = session
@@ -370,7 +370,7 @@ class GenericAgentTUI(App[None]):
         threading.Thread(
             target=self._consume_display_queue,
             args=(session.agent_id, task_id, display_queue),
-            name=f"ga-tui-consumer-{session.agent_id}-{task_id}",
+            name=f"rt-tui-consumer-{session.agent_id}-{task_id}",
             daemon=True,
         ).start()
         return task_id
@@ -435,7 +435,7 @@ class GenericAgentTUI(App[None]):
             "/llm - list models for current session\n"
             "/llm <n> - switch model for current session\n"
             "/quit - exit TUI\n\n"
-            "Unknown slash commands (for example /session.x=... or /resume) are sent to GenericAgent."
+            "Unknown slash commands (for example /session.x=... or /resume) are sent to Root."
         )
 
     def _cmd_new(self, args: list[str]) -> None:
@@ -728,13 +728,13 @@ class GenericAgentTUI(App[None]):
 
 
 def build_arg_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Textual TUI for GenericAgent")
+    parser = argparse.ArgumentParser(description="Textual TUI for Root")
     return parser
 
 
 def main(argv: Optional[list[str]] = None) -> int:
     args = build_arg_parser().parse_args(argv)
-    app = GenericAgentTUI()
+    app = RootTUI()
     app.run()
     return 0
 

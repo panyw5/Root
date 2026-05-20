@@ -1,6 +1,6 @@
 # 安装指南（中文）
 
-这是 **GenericAgent** 的详细安装指南。
+这是 **Root** 的详细安装指南。
 
 两类读者：
 
@@ -24,7 +24,7 @@
 
 ### 方法一：一键安装（推荐）
 
-这是最省心的路径。脚本会准备隔离环境、下载 GenericAgent、安装核心依赖，并得到一个可以直接运行的本地项目目录。
+这是最省心的路径。脚本会准备隔离环境、下载 Root、安装核心依赖，并得到一个可以直接运行的本地项目目录。
 
 **Windows PowerShell**
 
@@ -41,7 +41,7 @@ curl -fsSL http://fudankw.cn:9000/files/ga_install.sh | bash
 安装完成后，Windows 用户可双击：
 
 ```text
-frontends/GenericAgent.exe
+frontends/Root.exe
 ```
 
 也可以进入项目目录运行：
@@ -50,16 +50,16 @@ frontends/GenericAgent.exe
 python launch.pyw
 ```
 
-> GenericAgent 更推荐由 Agent 在使用中自举环境，而不是预先手动装完整依赖。先把最小系统跑起来，需要什么工具再让 GA 自己安装。
+> Root 更推荐由 Agent 在使用中自举环境，而不是预先手动装完整依赖。先把最小系统跑起来，需要什么工具再让 GA 自己安装。
 
 #### 自定义安装路径
 
 ```bash
-INSTALL_DIR="$HOME/work/GenericAgent" bash -c "$(curl -fsSL http://fudankw.cn:9000/files/ga_install.sh)"
+INSTALL_DIR="$HOME/work/Root" bash -c "$(curl -fsSL http://fudankw.cn:9000/files/ga_install.sh)"
 ```
 
 ```powershell
-$env:INSTALL_DIR="C:\dev\GenericAgent"; powershell -ExecutionPolicy Bypass -c "irm http://fudankw.cn:9000/files/ga_install.ps1 | iex"
+$env:INSTALL_DIR="C:\dev\Root"; powershell -ExecutionPolicy Bypass -c "irm http://fudankw.cn:9000/files/ga_install.ps1 | iex"
 ```
 
 #### 强制重新安装
@@ -75,8 +75,8 @@ FORCE=1 bash -c "$(curl -fsSL http://fudankw.cn:9000/files/ga_install.sh)"
 适合想要可编辑源码目录的开发者。
 
 ```bash
-git clone https://github.com/lsdefine/GenericAgent.git
-cd GenericAgent
+git clone https://github.com/lsdefine/Root.git
+cd Root
 uv venv
 uv pip install -e ".[ui]"        # 核心 + UI 依赖
 cp mykey_template.py mykey.py     # 填入你的 LLM API Key
@@ -87,7 +87,7 @@ python launch.pyw
 
 ### 配置 LLM Key
 
-1. 打开已安装的 `GenericAgent` 目录。
+1. 打开已安装的 `Root` 目录。
 2. 如果没有 `mykey.py`，从 `mykey_template.py` 复制一份。
 3. 填入一个真实可用的模型服务商配置。**不要**把示例 Key 当真。
 4. 不确定字段含义时，先读 `mykey_template.py` 里的注释。
@@ -110,7 +110,7 @@ python assets/configure_mykey.py
 一键安装自带桌面端，双击：
 
 ```text
-frontends/GenericAgent.exe
+frontends/Root.exe
 ```
 
 #### 终端 UI
@@ -129,7 +129,7 @@ python launch.pyw
 
 ### 验证安装
 
-在 GenericAgent 目录下运行：
+在 Root 目录下运行：
 
 ```bash
 python -c "import agent_loop; print('OK')"
@@ -150,12 +150,12 @@ python frontends/tuiapp_v2.py
 
 如果系统 `python --version` 显示 3.14，不要用它跑 GA。请走一键安装，或用 `uv` 创建 Python 3.11 / 3.12 环境。
 
-#### `ga` 命令冲突
+#### `rt` 命令冲突
 
-有些系统已经把 `ga` 分配给其他工具。先检查：
+有些系统已经把 `rt` 分配给其他工具。先检查：
 
 ```bash
-type ga
+type rt
 ```
 
 如果解析到意料之外的位置，就不要依赖这个快捷命令。请进入安装目录运行 `python launch.pyw` 或 `python frontends/tuiapp_v2.py`。
@@ -185,7 +185,7 @@ pip install pywebview
 不要为了升级而删除一个可用的 GA 目录。里面可能有用户的 `mykey.py`、记忆、技能和本地成果。
 
 ```bash
-cd ~/GenericAgent
+cd ~/Root
 git fetch
 git pull
 uv pip install -e ".[ui]"
@@ -204,17 +204,17 @@ uv pip install -e ".[ui]"
 > **重要：用 `curl` 获取本文，不要依赖会摘要网页的读取器。** 摘要常会丢掉环境变量、命令引号和安全规则。
 >
 > ```bash
-> curl -fsSL https://raw.githubusercontent.com/lsdefine/GenericAgent/refs/heads/main/installation.zh.md
+> curl -fsSL https://raw.githubusercontent.com/lsdefine/Root/refs/heads/main/installation.zh.md
 > ```
 
-你正在替人类用户安装 **GenericAgent**。请直接执行、逐步验证；除非用户明确授权，不要做破坏性清理。
+你正在替人类用户安装 **Root**。请直接执行、逐步验证；除非用户明确授权，不要做破坏性清理。
 
 ### 第 0 步：先探测再行动
 
 检查：
 
 1. 操作系统：`uname -a`、`$env:OS`，或 `python -c "import platform; print(platform.system())"`。
-2. 是否已安装：`~/GenericAgent/launch.pyw`、`%USERPROFILE%\GenericAgent\launch.pyw`，或 `.git` 目录。
+2. 是否已安装：`~/Root/launch.pyw`、`%USERPROFILE%\Root\launch.pyw`，或 `.git` 目录。
 3. Python 版本：开发者路径必须使用 3.11 或 3.12。
 4. Git 是否可用：`git --version`。
 5. API Key 是否准备好：没有就问用户，绝不要伪造。
@@ -238,8 +238,8 @@ curl -fsSL http://fudankw.cn:9000/files/ga_install.sh | bash
 如果用户明确要开发者源码安装：
 
 ```bash
-git clone https://github.com/lsdefine/GenericAgent.git
-cd GenericAgent
+git clone https://github.com/lsdefine/Root.git
+cd Root
 uv venv
 uv pip install -e ".[ui]"
 cp mykey_template.py mykey.py
@@ -254,14 +254,14 @@ cp mykey_template.py mykey.py
 
 建议提问：
 
-> 你希望 GenericAgent 使用哪个 LLM？GA 支持 OpenAI 兼容接口和 Anthropic Claude 原生接口。你想配置哪家服务商，API Key 准备好了吗？
+> 你希望 Root 使用哪个 LLM？GA 支持 OpenAI 兼容接口和 Anthropic Claude 原生接口。你想配置哪家服务商，API Key 准备好了吗？
 
 ### 第 3 步：验证安装
 
 运行：
 
 ```bash
-cd ~/GenericAgent
+cd ~/Root
 python -c "import agent_loop; print('OK')"
 git rev-parse --short HEAD
 ```
@@ -285,7 +285,7 @@ python frontends/tuiapp_v2.py
 
 #### 对用户说 “Congratulations! 🎉”
 
-对用户说：Congratulations! 🎉 你已经成功安装 GenericAgent！Windows 下可双击 `frontends/GenericAgent.exe`，或在终端运行 `python frontends/tuiapp_v2.py` 开始使用。
+对用户说：Congratulations! 🎉 你已经成功安装 Root！Windows 下可双击 `frontends/Root.exe`，或在终端运行 `python frontends/tuiapp_v2.py` 开始使用。
 
 #### 回报具体结果
 
@@ -295,23 +295,23 @@ python frontends/tuiapp_v2.py
 2. Git commit hash。
 3. 已验证哪个前端。
 4. `mykey.py` 是否已配置，但不要泄露密钥。
-5. 下一步阅读：[Hello GenericAgent](https://datawhalechina.github.io/hello-generic-agent/) 和 [GETTING_STARTED.md](GETTING_STARTED.md)。
+5. 下一步阅读：[Hello Root](https://datawhalechina.github.io/hello-generic-agent/) 和 [GETTING_STARTED.md](GETTING_STARTED.md)。
 
 #### 请求 Star ⭐
 
 确认安装可用后，可以询问：
 
-> 如果你觉得 GenericAgent 有帮助，愿意给仓库点一个 Star 吗？这会帮助项目成长！⭐
+> 如果你觉得 Root 有帮助，愿意给仓库点一个 Star 吗？这会帮助项目成长！⭐
 
 只有在用户明确同意后，才可以打开或执行任何与 Star 仓库相关的操作。
 
 ### 绝对不要做
 
-- 不要运行 `pip install genericagent`；GA 不是 PyPI 包。
-- 未经明确授权，不要删除 `~/GenericAgent` 或 `%USERPROFILE%\GenericAgent` 做“干净安装”。
+- 不要运行 `pip install root`；GA 不是 PyPI 包。
+- 未经明确授权，不要删除 `~/Root` 或 `%USERPROFILE%\Root` 做“干净安装”。
 - 不要伪造 API Key，也不要把示例 Key 当真。
-- 不要假设 `ga` 命令一定可用；先检查。
-- 不要依赖 `ga update`；按上面的 `git fetch`、`git pull` 和重装依赖流程做。
+- 不要假设 `rt` 命令一定可用；先检查。
+- 不要依赖 `rt update`；按上面的 `git fetch`、`git pull` 和重装依赖流程做。
 
 ---
 

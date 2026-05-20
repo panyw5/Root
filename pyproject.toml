@@ -2,7 +2,7 @@
 # minimal core first; missing packages can be installed on demand.
 
 [project]
-name = "genericagent"
+name = "root"
 version = "0.1.0"
 description = "Minimalist self-evolving autonomous agent framework"
 readme = "README.md"
@@ -40,7 +40,7 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
 py-modules = []
-packages = ["ga_cli"]
+packages = ["rt_cli"]
 
 [project.scripts]
-ga = "ga_cli.cli:main"
+rt = "rt_cli.cli:main"

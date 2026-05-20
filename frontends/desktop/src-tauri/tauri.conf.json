@@ -1,7 +1,7 @@
 {
-  "productName": "GenericAgent",
+  "productName": "Root",
   "version": "0.1.0",
-  "identifier": "com.genericagent.app",
+  "identifier": "com.root.app",
   "build": {
     "frontendDist": "../static"
   },
@@ -12,7 +12,7 @@
     },
     "windows": [
       {
-        "title": "GenericAgent",
+        "title": "Root",
         "label": "main",
         "width": 1280,
         "height": 800,
@@ -21,7 +21,7 @@
         "url": "http://127.0.0.1:14168/"
       },
       {
-        "title": "GenericAgent — Setup",
+        "title": "Root — Setup",
         "label": "setup",
         "width": 600,
         "height": 580,

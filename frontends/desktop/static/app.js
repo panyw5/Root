@@ -1,5 +1,5 @@
 window.process = window.process || { platform: navigator.platform.toLowerCase().includes('mac') ? 'darwin' : 'win32' };
-// GenericAgent Desktop — Renderer Logic
+// Root Desktop — Renderer Logic
 // Handles UI state, sessions, streaming, slash commands.
 
 'use strict';
@@ -167,7 +167,7 @@ function detectStructuredKind(line) {
   const m = trimmed.match(/^(TOOL_RECALL|TOOL_REQUEST|TOOL_RESPONSE|COWORK|TUNR|TURN|ACTION|OBSERVATION|THOUGHT|TOOL)[\s:_-]*(.*)$/i);
   if (m) return { kind: m[1].toUpperCase(), rest: (m[2] || '').trim() };
 
-  // GenericAgent's ACP bridge currently streams tool calls/results as plain
+  // Root's ACP bridge currently streams tool calls/results as plain
   // assistant text, not as ACP `tool_call` notifications. Recognize the real
   // XML-ish markers so streamed code_run/file_read/etc. blocks are folded.
   if (/^<function_calls\b[^>]*>/i.test(trimmed) || /^<invoke\b[^>]*\bname=["'][^"']+["'][^>]*>/i.test(trimmed)) {
@@ -768,7 +768,7 @@ function closeSession(id) {
   // Notify bridge to delete this session
   const sess = state.sessions.get(id);
   if (sess && sess.bridgeSessionId) {
-    const bridgeUrl = window.ga.bridgeUrl || 'http://127.0.0.1:14168';
+    const bridgeUrl = window.rt.bridgeUrl || 'http://127.0.0.1:14168';
     fetch(`${bridgeUrl}/session/${sess.bridgeSessionId}`, { method: 'DELETE' }).catch(() => {});
   }
   const keys = [...state.sessions.keys()];
@@ -798,7 +798,7 @@ async function newSession() {
   let createdSess = null;
   try {
     const cwd = await getCwd();
-    const res = await window.ga.rpc('session/new', { cwd, mcp_servers: [] });
+    const res = await window.rt.rpc('session/new', { cwd, mcp_servers: [] });
     if (res.error) throw new Error(typeof res.error === 'string' ? res.error : (res.error.message || JSON.stringify(res.error)));
     const bridgeSessionId = res.sessionId;
     const localSessionId = `local-${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -814,7 +814,7 @@ async function newSession() {
 
 async function getCwd() {
   // Use GA root as default cwd
-  const status = await window.ga.checkStatus();
+  const status = await window.rt.checkStatus();
   return status.gaRoot;
 }
 
@@ -1386,7 +1386,7 @@ async function pollSessionMessages(sess) {
   try {
     while (runtime.busy || runtime.forcePollOnce) {
       runtime.forcePollOnce = false;
-      const res = await window.ga.pollSession(sess.bridgeSessionId || sess.id, runtime.lastPolledMessageId || 0);
+      const res = await window.rt.pollSession(sess.bridgeSessionId || sess.id, runtime.lastPolledMessageId || 0);
       if (res?.error) throw new Error(res.error.message || res.error);
       const result = res.result || res;
       for (const msg of (result.messages || [])) upsertPolledMessage(sess, msg, { partial: false });
@@ -1440,7 +1440,7 @@ async function sendPrompt(text, images = []) {
 
   setBusy(true, 'Thinking…', sess);
   try {
-    const res = await window.ga.rpc('session/prompt', {
+    const res = await window.rt.rpc('session/prompt', {
       sessionId: await ensureBridgeSession(sess),
       prompt: text,
       images: images.map(img => ({id: img.id, dataUrl: img.dataUrl})),
@@ -1467,7 +1467,7 @@ async function cancelPrompt() {
   const runtime = sess ? getSessionRuntime(sess) : null;
   if (!runtime?.busy) return false;
   try {
-    const res = await window.ga.rpc('session/cancel', { sessionId: sess?.bridgeSessionId || state.activeId });
+    const res = await window.rt.rpc('session/cancel', { sessionId: sess?.bridgeSessionId || state.activeId });
     if (res.error) throw new Error(res.error.message || res.error);
     return true;
   } catch (e) {
@@ -1512,7 +1512,7 @@ async function handleSlash(cmd) {
         const cfg = getActiveConfig();
         cfg.theme = arg;
         applyTheme();
-        await window.ga.saveConfig(cfg);
+        await window.rt.saveConfig(cfg);
         showSystem(`Theme → ${arg}`);
       } else {
         showSystem('Usage: /theme light|dark|auto');
@@ -1520,12 +1520,12 @@ async function handleSlash(cmd) {
       break;
     case 'cwd':
       if (!arg) {
-        const status = await window.ga.checkStatus();
+        const status = await window.rt.checkStatus();
         showSystem(`cwd: ${sess?.cwd || status.gaRoot}`);
       } else {
         showSystem(`Creating new session in ${arg}…`);
         // Need a new session for different cwd
-        const res = await window.ga.rpc('session/new', { cwd: arg, mcp_servers: [] });
+        const res = await window.rt.rpc('session/new', { cwd: arg, mcp_servers: [] });
         if (res.error) showSystem('Failed: ' + (res.error.message || res.error));
         else {
           const bridgeSessionId = res.sessionId;
@@ -1668,7 +1668,7 @@ function renderModelOptions() {
 
 async function loadModelProfiles() {
   try {
-    const result = await window.ga.getModelProfiles();
+    const result = await window.rt.getModelProfiles();
     state.modelProfiles = Array.isArray(result && result.profiles) ? result.profiles : [];
     renderModelOptions();
   } catch (err) {
@@ -1705,7 +1705,7 @@ async function saveSettings() {
     if (!sess) throw new Error('No active session');
     const cfg = sess.config;
     cfg.llmNo = Math.max(0, parseInt($('cfg-llm').value, 10) || 0);
-    await window.ga.saveConfig(cfg);
+    await window.rt.saveConfig(cfg);
     closeSettings();
   } catch (err) {
     showError('Failed to save settings: ' + (err.message || err));
@@ -1718,7 +1718,7 @@ async function ensureBridgeSession(sess) {
   if (!sess) throw new Error('No active session.');
   if (sess.bridgeSessionId) return sess.bridgeSessionId;
   const cwd = sess.cwd || await getCwd();
-  const res = await window.ga.rpc('session/new', { cwd, mcp_servers: [] });
+  const res = await window.rt.rpc('session/new', { cwd, mcp_servers: [] });
   if (res.error) throw new Error(typeof res.error === 'string' ? res.error : (res.error.message || JSON.stringify(res.error)));
   sess.bridgeSessionId = res.sessionId;
   sess.cwd = cwd;
@@ -1734,7 +1734,7 @@ async function restartBridge(options = {}) {
     for (const sess of state.sessions.values()) sess.bridgeSessionId = null;
   }
   state.bridgeNoticeMessage = showSystem('Bridge restarting…');
-  await window.ga.startBridge(getActiveConfig().llmNo || 0);
+  await window.rt.startBridge(getActiveConfig().llmNo || 0);
   window.setTimeout(() => {
     if (state.restartingBridge && !state.bridgeReady && !getActiveSessionRuntime()?.busy) {
       markBridgeReady('Bridge ready.');
@@ -1758,7 +1758,7 @@ async function markBridgeReady(noticeText = 'Bridge ready.') {
     _bootstrappingSession = true;
     try {
       // Try to restore existing sessions from bridge
-      const bridgeUrl = window.ga.bridgeUrl || 'http://127.0.0.1:14168';
+      const bridgeUrl = window.rt.bridgeUrl || 'http://127.0.0.1:14168';
       const listRes = await fetch(`${bridgeUrl}/sessions`).then(r => r.json()).catch(() => null);
       const existingSessions = listRes?.sessions || [];
       if (existingSessions.length > 0) {
@@ -1794,19 +1794,19 @@ async function markBridgeReady(noticeText = 'Bridge ready.') {
   loadModelProfiles();
 }
 
-window.ga.onBridgeReady(() => {
+window.rt.onBridgeReady(() => {
   markBridgeReady();
 });
 
-window.ga.onBridgeMessage(() => {
+window.rt.onBridgeMessage(() => {
   // RPC responses are resolved in main; renderer readiness comes from bridge-ready.
 });
 
-window.ga.onBridgeNotification((msg) => {
+window.rt.onBridgeNotification((msg) => {
   handleNotification(msg);
 });
 
-window.ga.onBridgeError((err) => {
+window.rt.onBridgeError((err) => {
   console.error('Bridge error:', err);
   addDiagnostic('error', 'Bridge error', err);
   setStatus('err', 'Error');
@@ -1815,7 +1815,7 @@ window.ga.onBridgeError((err) => {
 
   if (err.type === 'no-mykey') {
     showError(err.message, 'Setup', async () => {
-      await window.ga.openMykeyTemplate();
+      await window.rt.openMykeyTemplate();
     }, { skipDiagnostic: true });
   } else if (err.type === 'no-python') {
     showError(err.message, 'Settings', openSettings, { skipDiagnostic: true });
@@ -1824,7 +1824,7 @@ window.ga.onBridgeError((err) => {
   }
 });
 
-window.ga.onBridgeClosed((info) => {
+window.rt.onBridgeClosed((info) => {
   addDiagnostic('warn', 'Bridge closed', info);
   if (state.restartingBridge) {
     setStatus('warn', 'Restarting…');
@@ -1834,7 +1834,7 @@ window.ga.onBridgeClosed((info) => {
   setStatus('err', `Bridge stopped (${info.code})`);
 });
 
-window.ga.onBridgeLog((text) => {
+window.rt.onBridgeLog((text) => {
   console.log('[bridge]', text);
   addDiagnostic('info', 'Bridge log', text);
 });
@@ -1957,7 +1957,7 @@ $('settings-btn').addEventListener('click', openSettings);
 $('close-settings').addEventListener('click', closeSettings);
 $('cancel-settings').addEventListener('click', closeSettings);
 $('save-settings').addEventListener('click', saveSettings);
-$('open-mykey').addEventListener('click', () => openConfigFile(window.ga.openMykey, 'mykey.py'));
+$('open-mykey').addEventListener('click', () => openConfigFile(window.rt.openMykey, 'mykey.py'));
 $('error-dismiss').addEventListener('click', hideError);
 
 settingsModal.querySelector('.modal-backdrop').addEventListener('click', closeSettings);
@@ -2088,19 +2088,19 @@ settingsModal.querySelector('.modal-backdrop').addEventListener('click', closeSe
   });
 
   // Listen for IPC from main process (menu accelerator on macOS)
-  if (window.ga && window.ga.onOpenSearch) {
-    window.ga.onOpenSearch(() => openSearch());
+  if (window.rt && window.rt.onOpenSearch) {
+    window.rt.onOpenSearch(() => openSearch());
   }
 })();
 
 // ─── Init ────────────────────────────────────────────────────────────────
 (async function init() {
   // Add platform class to body for platform-specific CSS
-  const platform = (window.ga && window.ga.platform) || process.platform || 'unknown';
+  const platform = (window.rt && window.rt.platform) || process.platform || 'unknown';
   document.body.classList.add('platform-' + platform);
 
   try {
-    const saved = await window.ga.getConfig();
+    const saved = await window.rt.getConfig();
     Object.assign(state.defaultConfig, saved);
   } catch (err) {
     addDiagnostic('error', 'Failed to load settings', err);

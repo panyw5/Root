@@ -1,3 +1,3 @@
 @echo off
 cd /d "%~dp0.."
-python -m ga_cli %*
+python -m rt_cli %*

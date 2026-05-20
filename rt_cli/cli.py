@@ -1,7 +1,7 @@
 """
-ga_cli/cli.py - GenericAgent 命令行分发系统
+rt_cli/cli.py - Root 命令行分发系统
 
-通过 python -m ga_cli <命令> 或 ga <命令> 调用
+通过 python -m rt_cli <命令> 或 rt <命令> 调用
 """
 import os, sys, subprocess, argparse, textwrap
 
@@ -37,7 +37,7 @@ def launch_frontend(cmd_parts, args=None):
     # (e.g. TUI's @file picker). Bash/cmd wrappers may have already set this;
     # otherwise capture the current cwd before we chdir into PROJECT_DIR.
     env = os.environ.copy()
-    env.setdefault("GA_USER_CWD", os.getcwd())
+    env.setdefault("RT_USER_CWD", os.getcwd())
 
     print(f"🚀 {' '.join(full_cmd)}")
     sys.stdout.flush()
@@ -67,19 +67,29 @@ COMMANDS = {
         "cmd": ["python", "{PROJECT_DIR}/hub.pyw"],
     },
     "tui": {
-        "help": "启动终端 TUI (tuiapp_v2)",
-        "desc": "启动终端图形界面（Textual v2，含 /btw /continue /export /restore），适合纯终端环境或 SSH",
+        "help": "启动新版终端 TUI (tui_v3)",
+        "desc": "启动新版滚屏式终端界面 (tui_v3，scrollback-first，单文件实现)，纯终端/SSH 推荐",
+        "cmd": ["python", "{FRONTENDS}/tui_v3.py"],
+    },
+    "tui-v3": {
+        "help": "启动新版终端 TUI (tui_v3，显式别名)",
+        "desc": "等同于 rt tui，指向 frontends/tui_v3.py",
+        "cmd": ["python", "{FRONTENDS}/tui_v3.py"],
+    },
+    "tui-v2": {
+        "help": "启动 Textual 终端 TUI v2 (tuiapp_v2)",
+        "desc": "启动 Textual v2 终端图形界面（含 /btw /continue /export /restore）",
+        "cmd": ["python", "{FRONTENDS}/tuiapp_v2.py"],
+    },
+    "tui2": {
+        "help": "启动 Textual 终端 TUI v2 (tuiapp_v2，旧别名)",
+        "desc": "等同于 rt tui-v2，保留以兼容旧用法",
         "cmd": ["python", "{FRONTENDS}/tuiapp_v2.py"],
     },
     "tui-legacy": {
         "help": "启动旧版终端 TUI (tuiapp)",
         "desc": "启动旧版 Textual TUI（保留用于回退/调试）",
         "cmd": ["python", "{FRONTENDS}/tuiapp.py"],
-    },
-    "tui2": {
-        "help": "启动终端 TUI v2 (tuiapp_v2)",
-        "desc": "启动增强版终端图形界面（Textual v2），更多功能更好的体验",
-        "cmd": ["python", "{FRONTENDS}/tuiapp_v2.py"],
     },
     "cli": {
         "help": "启动 CLI 对话 (agentmain)",
@@ -93,7 +103,7 @@ COMMANDS = {
     },
     "status": {
         "help": "检查运行状态",
-        "desc": "检查当前是否已有 GenericAgent 进程在运行",
+        "desc": "检查当前是否已有 Root 进程在运行",
         "cmd": None,
         "internal": True,
     },
@@ -138,7 +148,7 @@ def cmd_status():
         for p in running:
             print(f"   PID {p.info['pid']} — {' '.join(p.info['cmdline'][:3])}")
     else:
-        print("⚫ GenericAgent 进程未运行")
+        print("⚫ Root 进程未运行")
 
 
 def cmd_update():
@@ -159,19 +169,20 @@ def cmd_update():
 
 def main():
     parser = argparse.ArgumentParser(
-        prog="ga",
-        description="GenericAgent 全局命令入口",
+        prog="rt",
+        description="Root 全局命令入口",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=textwrap.dedent("""\
             示例:
-              ga gui               启动桌面 GUI
-              ga web               启动 Web 增强版
-              ga web --native      启动 Web 基础版(桌面壳)
-              ga tui               启动终端 TUI (v1)
-              ga tui2              启动终端 TUI (v2 增强版)
-              ga pet               启动桌面宠物 v2
-              ga launch            启动 webview 桌面壳
-              ga list              列出所有命令
+              rt gui               启动桌面 GUI
+              rt web               启动 Web 增强版
+              rt web --native      启动 Web 基础版(桌面壳)
+              rt tui               启动新版终端 TUI (v3, scrollback-first)
+              rt tui-v2            启动 Textual v2 终端 TUI
+              rt tui-legacy        启动旧版 Textual TUI
+              rt pet               启动桌面宠物 v2
+              rt launch            启动 webview 桌面壳
+              rt list              列出所有命令
         """),
     )
     parser.add_argument("command", nargs="?", help="命令名")
@@ -181,7 +192,7 @@ def main():
     args, unknown = parser.parse_known_args()
 
     if args.version:
-        print("GenericAgent v0.1.0")
+        print("Root v0.1.0")
         return
 
     cmd = args.command
@@ -206,7 +217,7 @@ def main():
 
     if cmd not in COMMANDS:
         print(f"❌ 未知命令: {cmd}")
-        print(f"   使用 'ga list' 查看可用命令")
+        print(f"   使用 'rt list' 查看可用命令")
         sys.exit(1)
 
     info = COMMANDS[cmd]

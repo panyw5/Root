@@ -1,4 +1,4 @@
-"""tui_v3 — scrollback-first TUI for GenericAgent, consolidated.
+"""tui_v3 — scrollback-first TUI for Root, consolidated.
 
 Merged from frontends/tui/ (cjk, clipboard, renderer, protocol, core/sb)
 into a single file so the v3 frontend ships as one drop-in module.
@@ -131,7 +131,7 @@ def _rich_version() -> str:
 
 log = logging.getLogger(__name__)
 
-_TEMP_DIR = os.path.join(tempfile.gettempdir(), 'genericagent_tui')
+_TEMP_DIR = os.path.join(tempfile.gettempdir(), 'root_tui')
 _platform = sys.platform
 _HAS_WAYLAND = bool(os.environ.get('WAYLAND_DISPLAY'))
 
@@ -433,7 +433,7 @@ def _extract_ask_user(ctx: dict | None) -> AskUserEvent | None:
 
 
 class AgentBridge:
-    """Wraps GenericAgent for the TUI. One bridge per session."""
+    """Wraps Root for the TUI. One bridge per session."""
 
     def __init__(self, llm_no: int = 0):
         self.agent = GeneraticAgent()
@@ -449,7 +449,7 @@ class AgentBridge:
         if not getattr(self.agent, 'llmclient', None):
             self._healthy = False
             self._init_error = 'No LLM configured — check mykey.py'
-        self._runner = threading.Thread(target=self._run_safe, daemon=True, name=f'ga-tui-agent')
+        self._runner = threading.Thread(target=self._run_safe, daemon=True, name=f'rt-tui-agent')
         self._runner.start()
 
     def _run_safe(self):
@@ -1534,7 +1534,7 @@ class SB:
         d, r = _DIM, _RST
         cwd = os.getcwd().replace(os.path.expanduser('~'), '~')
         name = self._bridge.llm_name if self._bridge else '?'
-        rows = [(_ACCENT + '>_' + _RST + ' GenericAgent', '>_ GenericAgent'),
+        rows = [(_ACCENT + '>_' + _RST + ' Root', '>_ Root'),
                 ('', ''),
                 (f'{d}model:{r}       {name}   {d}/llm 切换{r}',
                  f'model:       {name}   /llm 切换'),

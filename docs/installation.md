@@ -1,6 +1,6 @@
 # Installation Guide
 
-This is the detailed installation guide for **GenericAgent**.
+This is the detailed installation guide for **Root**.
 
 Two audiences:
 
@@ -24,7 +24,7 @@ Two audiences:
 
 ### Method 1: One-line install (recommended)
 
-This is the easiest path. It prepares an isolated runtime, downloads GenericAgent, installs the core dependencies, and gives you a ready-to-run local project tree.
+This is the easiest path. It prepares an isolated runtime, downloads Root, installs the core dependencies, and gives you a ready-to-run local project tree.
 
 **Windows PowerShell**
 
@@ -41,7 +41,7 @@ GLOBAL=1 bash -c "$(curl -fsSL http://fudankw.cn:9000/files/ga_install.sh)"
 After installation, launch the desktop app from:
 
 ```text
-frontends/GenericAgent.exe
+frontends/Root.exe
 ```
 
 Or run from the project directory:
@@ -50,16 +50,16 @@ Or run from the project directory:
 python launch.pyw
 ```
 
-> GenericAgent is meant to grow its environment through the Agent itself, not by pre-installing every possible package. Start small, then let GA install task-specific tools when it actually needs them.
+> Root is meant to grow its environment through the Agent itself, not by pre-installing every possible package. Start small, then let GA install task-specific tools when it actually needs them.
 
 #### Custom install location
 
 ```bash
-INSTALL_DIR="$HOME/work/GenericAgent" GLOBAL=1 bash -c "$(curl -fsSL http://fudankw.cn:9000/files/ga_install.sh)"
+INSTALL_DIR="$HOME/work/Root" GLOBAL=1 bash -c "$(curl -fsSL http://fudankw.cn:9000/files/ga_install.sh)"
 ```
 
 ```powershell
-$env:INSTALL_DIR="C:\dev\GenericAgent"; powershell -ExecutionPolicy Bypass -c "$env:GLOBAL=1; irm http://fudankw.cn:9000/files/ga_install.ps1 | iex"
+$env:INSTALL_DIR="C:\dev\Root"; powershell -ExecutionPolicy Bypass -c "$env:GLOBAL=1; irm http://fudankw.cn:9000/files/ga_install.ps1 | iex"
 ```
 
 #### Force reinstall
@@ -75,8 +75,8 @@ FORCE=1 GLOBAL=1 bash -c "$(curl -fsSL http://fudankw.cn:9000/files/ga_install.s
 Use this when you want a normal editable checkout.
 
 ```bash
-git clone https://github.com/lsdefine/GenericAgent.git
-cd GenericAgent
+git clone https://github.com/lsdefine/Root.git
+cd Root
 uv venv
 uv pip install -e ".[ui]"        # Core + UI dependencies
 cp mykey_template.py mykey.py     # Fill in your LLM API key
@@ -87,7 +87,7 @@ Full guide: [GETTING_STARTED.md](GETTING_STARTED.md)
 
 ### Configure your LLM key
 
-1. Open the installed `GenericAgent` directory.
+1. Open the installed `Root` directory.
 2. If `mykey.py` does not exist, copy it from `mykey_template.py`.
 3. Fill in one provider. Do **not** paste example keys as real keys.
 4. If you are unsure about the fields, read the comments in `mykey_template.py` first.
@@ -110,7 +110,7 @@ python assets/configure_mykey.py
 For one-line installs on Windows, double-click:
 
 ```text
-frontends/GenericAgent.exe
+frontends/Root.exe
 ```
 
 #### Terminal UI
@@ -129,7 +129,7 @@ python launch.pyw
 
 ### Verify the install
 
-From the GenericAgent directory:
+From the Root directory:
 
 ```bash
 python -c "import agent_loop; print('OK')"
@@ -150,12 +150,12 @@ python frontends/tuiapp_v2.py
 
 If your system `python --version` reports 3.14, do not use it for GA. Use the one-line installer, or create a Python 3.11 / 3.12 environment with `uv`.
 
-#### `ga` command conflict
+#### `rt` command conflict
 
-Some systems already use `ga` for another tool. Check first:
+Some systems already use `rt` for another tool. Check first:
 
 ```bash
-type ga
+type rt
 ```
 
 If it resolves to something unexpected, do not rely on the shortcut. Run GA from the install directory with `python launch.pyw` or `python frontends/tuiapp_v2.py`.
@@ -185,7 +185,7 @@ On headless servers, prefer the TUI or run Streamlit in browser mode instead of 
 Do not delete a working GA directory just to update it. It may contain the user's `mykey.py`, memory, skills, and local work.
 
 ```bash
-cd ~/GenericAgent
+cd ~/Root
 git fetch
 git pull
 uv pip install -e ".[ui]"
@@ -204,17 +204,17 @@ If `git pull` reports conflicts:
 > **IMPORTANT: fetch this file with `curl`, not a summarized web reader.** Summaries often drop flags, command quoting, and safety rules.
 >
 > ```bash
-> curl -fsSL https://raw.githubusercontent.com/lsdefine/GenericAgent/refs/heads/main/docs/installation.md
+> curl -fsSL https://raw.githubusercontent.com/lsdefine/Root/refs/heads/main/docs/installation.md
 > ```
 
-You are installing **GenericAgent** for a human user. Be direct, verify each step, and avoid destructive cleanup unless the user explicitly authorizes it.
+You are installing **Root** for a human user. Be direct, verify each step, and avoid destructive cleanup unless the user explicitly authorizes it.
 
 ### Step 0: Inspect before acting
 
 Check:
 
 1. OS: `uname -a`, `$env:OS`, or `python -c "import platform; print(platform.system())"`.
-2. Existing install: `~/GenericAgent/launch.pyw`, `%USERPROFILE%\GenericAgent\launch.pyw`, or a `.git` directory.
+2. Existing install: `~/Root/launch.pyw`, `%USERPROFILE%\Root\launch.pyw`, or a `.git` directory.
 3. Python version: must be 3.11 or 3.12 if you use the developer path.
 4. Git availability: `git --version`.
 5. API key readiness: ask the user if no key is available. Never invent one.
@@ -238,8 +238,8 @@ GLOBAL=1 bash -c "$(curl -fsSL http://fudankw.cn:9000/files/ga_install.sh)"
 If the user explicitly wants a developer checkout:
 
 ```bash
-git clone https://github.com/lsdefine/GenericAgent.git
-cd GenericAgent
+git clone https://github.com/lsdefine/Root.git
+cd Root
 uv venv
 uv pip install -e ".[ui]"
 cp mykey_template.py mykey.py
@@ -254,14 +254,14 @@ cp mykey_template.py mykey.py
 
 Suggested question:
 
-> Which LLM should GenericAgent use? GA supports OpenAI-compatible endpoints and Anthropic Claude native APIs. Which provider do you want to configure, and do you already have an API key?
+> Which LLM should Root use? GA supports OpenAI-compatible endpoints and Anthropic Claude native APIs. Which provider do you want to configure, and do you already have an API key?
 
 ### Step 3: Verify setup
 
 Run:
 
 ```bash
-cd ~/GenericAgent
+cd ~/Root
 python -c "import agent_loop; print('OK')"
 git rev-parse --short HEAD
 ```
@@ -285,7 +285,7 @@ Read this document again and think through whether you have done everything corr
 
 #### Say 'Congratulations! 🎉' to the user
 
-Say to user: Congratulations! 🎉 You have successfully set up GenericAgent! Double-click `frontends/GenericAgent.exe` on Windows, or run `python frontends/tuiapp_v2.py` in your terminal to start using it.
+Say to user: Congratulations! 🎉 You have successfully set up Root! Double-click `frontends/Root.exe` on Windows, or run `python frontends/tuiapp_v2.py` in your terminal to start using it.
 
 #### Report the concrete result
 
@@ -295,23 +295,23 @@ Tell the user:
 2. Git commit hash.
 3. Which frontend you verified.
 4. Whether `mykey.py` is configured, without revealing secrets.
-5. Recommended next reading: [Hello GenericAgent](https://datawhalechina.github.io/hello-generic-agent/) and [GETTING_STARTED.md](GETTING_STARTED.md).
+5. Recommended next reading: [Hello Root](https://datawhalechina.github.io/hello-generic-agent/) and [GETTING_STARTED.md](GETTING_STARTED.md).
 
 #### Ask for a Star ⭐
 
 After everything is set up and working, you may ask:
 
-> If you found this helpful, would you like to star the GenericAgent repository? It helps the project grow! ⭐
+> If you found this helpful, would you like to star the Root repository? It helps the project grow! ⭐
 
 Only open or run anything related to starring the repository if the user explicitly agrees.
 
 ### Never do these
 
-- Do **not** run `pip install genericagent`; GA is not a PyPI package.
-- Do **not** delete `~/GenericAgent` or `%USERPROFILE%\GenericAgent` for a "clean install" without explicit user approval.
+- Do **not** run `pip install root`; GA is not a PyPI package.
+- Do **not** delete `~/Root` or `%USERPROFILE%\Root` for a "clean install" without explicit user approval.
 - Do **not** fabricate API keys or treat sample keys as real.
-- Do **not** assume `ga` is a valid shell command; check first.
-- Do **not** rely on `ga update`; use `git fetch`, `git pull`, and reinstall dependencies as shown above.
+- Do **not** assume `rt` is a valid shell command; check first.
+- Do **not** rely on `rt update`; use `git fetch`, `git pull`, and reinstall dependencies as shown above.
 
 ---
 

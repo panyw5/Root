@@ -2411,7 +2411,7 @@ def main():
     )
     app = QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(False)
-    app.setApplicationName("GenericAgent")
+    app.setApplicationName("Root")
 
     # Font
     font = QFont()
@@ -2444,7 +2444,7 @@ def main():
     panel.show()
 
     scr = QApplication.primaryScreen().availableGeometry()
-    print(f"[GenericAgent] 启动成功")
+    print(f"[Root] 启动成功")
     print(f"  屏幕分辨率: {scr.width()}x{scr.height()}")
     print(f"  悬浮按钮: ({button.x()}, {button.y()})")
     print(f"  聊天面板: ({panel.x()}, {panel.y()})")

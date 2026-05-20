@@ -3,7 +3,7 @@
 `install()` wraps `llmcore._record_usage` + `llmcore.print` (the SSE
 `messages` path only emits final `output_tokens` through `[Output] tokens=N`).
 Trackers are keyed by `threading.current_thread().name`; each TUI session
-runs its agent on `ga-tui-agent-<id>`, so `/cost` is a thread lookup.
+runs its agent on `rt-tui-agent-<id>`, so `/cost` is a thread lookup.
 
 Subagent processes are out-of-process, so `scan_subagent_logs` parses the
 same `[Cache]` / `[Output]` print lines from `temp/*/stdout.log`.

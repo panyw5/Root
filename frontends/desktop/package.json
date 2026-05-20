@@ -1,5 +1,5 @@
 {
-  "name": "genericagent-web2",
+  "name": "root-web2",
   "version": "0.1.0",
   "scripts": {
     "tauri": "tauri"

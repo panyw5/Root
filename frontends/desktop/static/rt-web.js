@@ -1,4 +1,4 @@
-// GenericAgent Web2 browser bridge adapter.
+// Root Web2 browser bridge adapter.
 // HTTP is the command/data channel. WebSocket only carries small state events.
 (() => {
   'use strict';
@@ -14,7 +14,7 @@
     if (!listeners.has(channel)) listeners.set(channel, new Set());
     listeners.get(channel).add(cb);
     if (channel === 'bridge-ready' && cachedBridgeReady) {
-      try { cb(cachedBridgeReady); } catch (err) { console.error('[ga-web2 listener] replay bridge-ready', err); }
+      try { cb(cachedBridgeReady); } catch (err) { console.error('[rt-web2 listener] replay bridge-ready', err); }
     }
     return () => listeners.get(channel)?.delete(cb);
   }
@@ -24,7 +24,7 @@
     const set = listeners.get(channel);
     if (!set) return;
     for (const cb of Array.from(set)) {
-      try { cb(payload); } catch (err) { console.error('[ga-web2 listener]', channel, err); }
+      try { cb(payload); } catch (err) { console.error('[rt-web2 listener]', channel, err); }
     }
   }
 
@@ -115,7 +115,7 @@
     }
   }
 
-  window.ga = {
+  window.rt = {
     platform: navigator.platform.toLowerCase().includes('mac') ? 'darwin' : 'win32',
     startBridge: async () => { connectWs(); return http('/status'); },
     stopBridge: async () => ({ ok: true }),

@@ -1,7 +1,7 @@
 @echo off
 chcp 65001 >nul
-:: ga-cli-install.cmd - 将 GenericAgent 命令注册到系统 PATH
-:: 运行一次后，即可在任意位置敲 ga <command>
+:: rt-cli-install.cmd - 将 Root 命令注册到系统 PATH
+:: 运行一次后，即可在任意位置敲 rt <command>
 :: 建议以管理员身份运行
 
 cd /d "%~dp0.."
@@ -9,7 +9,7 @@ set "TARGET_DIR=%CD%"
 
 echo.
 echo  ╔══════════════════════════════════════════╗
-echo  ║      GenericAgent 命令行安装向导         ║
+echo  ║      Root 命令行安装向导         ║
 echo  ╚══════════════════════════════════════════╝
 echo.
 echo  项目目录: %TARGET_DIR%
@@ -19,7 +19,7 @@ REM 检查是否已在 PATH 中
 echo %%PATH%% | find /I "%TARGET_DIR%" >nul
 if not errorlevel 1 (
     echo  [✓] 项目目录已在 PATH 中
-    echo  你可以在任意位置敲: ga list
+    echo  你可以在任意位置敲: rt list
     pause
     exit /b 0
 )
@@ -56,7 +56,7 @@ echo  安装完成！
 echo.
 echo  现在你可以：
 echo    - 打开新的终端窗口
-echo    - 在项目目录敲: ga list
-echo    - 在任意位置敲: ga gui / ga web / ga hub ...
+echo    - 在项目目录敲: rt list
+echo    - 在任意位置敲: rt gui / rt web / rt hub ...
 echo  ────────────────────────────────────────────
 pause

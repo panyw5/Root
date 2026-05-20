@@ -20,7 +20,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
-from agentmain import GenericAgent
+from agentmain import Root
 
 HOST = "127.0.0.1"
 PORT = 8900
@@ -42,7 +42,7 @@ class SubagentActionIn(BaseModel):
 @dataclass
 class SubAgentState:
     id: str
-    agent: GenericAgent
+    agent: Root
     prompt: str
     reply: str = ""
     status: str = "running"  # running | stopped | failed | aborted
@@ -57,7 +57,7 @@ ws_clients: set[WebSocket] = set()
 main_loop: Optional[asyncio.AbstractEventLoop] = None
 # conductor event queue: only user messages and subagent-done events enter here.
 conductor_events: "queue.Queue[dict]" = queue.Queue()
-conductor_agent: Optional[GenericAgent] = None
+conductor_agent: Optional[Root] = None
 conductor_started = False
 chat_messages: List[dict] = []
 
@@ -132,13 +132,13 @@ def add_chat(msg: str, role: str = "conductor"):
     schedule_broadcast({"type": "chat", "item": item})
     return item
 
-def start_agent_runner(agent: GenericAgent, name: str):
+def start_agent_runner(agent: Root, name: str):
     t = threading.Thread(target=agent.run, name=name, daemon=True)
     t.start()
     return t
 
 def monitor_display_queue(agent_id: str, dq: "queue.Queue", trigger_when_done: bool):
-    """Consume one GenericAgent display_queue.
+    """Consume one Root display_queue.
 
     next: update card only, never wake conductor.
     done: update card/chat, then wake conductor if this is subagent queue.
@@ -174,7 +174,7 @@ def monitor_display_queue(agent_id: str, dq: "queue.Queue", trigger_when_done: b
 
 def start_subagent(prompt: str) -> dict:
     sid = short_id()
-    agent = GenericAgent()
+    agent = Root()
     agent.inc_out = True
     agent.verbose = False
 
@@ -299,7 +299,7 @@ def monitor_conductor_queue(dq: "queue.Queue") -> str:
 
 def conductor_loop():
     global conductor_agent, conductor_started
-    conductor_agent = GenericAgent()
+    conductor_agent = Root()
     conductor_agent.inc_out = True
     start_agent_runner(conductor_agent, "conductor-agent")
     conductor_started = True
@@ -325,7 +325,7 @@ def conductor_loop():
             done_text = monitor_conductor_queue(dq)
             # Fallback: if conductor's last turn ended with an LLM error (yielded as
             # text by MixinSession instead of raised), surface it directly (#342).
-            # Use tail-window substring check (same style as ga.do_no_tool's
+            # Use tail-window substring check (same style as rt.do_no_tool's
             # content[-100:]); window covers the error line plus any decoration
             # (fence + "[Info] Final response to user.") appended by do_no_tool.
             tail = (done_text or '')[-1000:]

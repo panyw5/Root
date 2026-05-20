@@ -8,7 +8,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from llmcore import reload_mykeys, LLMSession, ToolClient, ClaudeSession, MixinSession, NativeToolClient, NativeClaudeSession, NativeOAISession, resolve_client
 from agent_loop import agent_runner_loop
-from ga import GenericAgentHandler, smart_format, get_global_memory, format_error, consume_file
+from rt import RootHandler, smart_format, get_global_memory, format_error, consume_file
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 def load_tool_schema(suffix=''):
@@ -37,12 +37,12 @@ def get_system_prompt():
     with open(os.path.join(script_dir, f'assets/sys_prompt{lang_suffix}.txt'), 'r', encoding='utf-8') as f: prompt = f.read()
     prompt += f"\nToday: {time.strftime('%Y-%m-%d %a')}\n"
     # Tell the model where the user actually invoked the agent from.
-    # tuiapp_v2 / ga_cli already os.chdir() into GA_USER_CWD, so os.getcwd()
+    # tuiapp_v2 / rt_cli already os.chdir() into RT_USER_CWD, so os.getcwd()
     # reflects the user's launch directory (e.g. ~/apps/opencode), not the
-    # GenericAgent source tree. Without this hint the model treats the
+    # Root source tree. Without this hint the model treats the
     # framework's own memory/global_mem.txt paths as "the current project".
     try:
-        user_cwd = os.path.abspath(os.environ.get('GA_USER_CWD') or os.getcwd())
+        user_cwd = os.path.abspath(os.environ.get('RT_USER_CWD') or os.getcwd())
     except Exception:
         user_cwd = os.getcwd()
     if user_cwd and os.path.abspath(user_cwd) != os.path.abspath(script_dir):
@@ -52,14 +52,14 @@ def get_system_prompt():
             f"This is THIS session's active working directory; the Python process cwd is already chdir'd here. "
             f"Treat it as the user's current project root: resolve relative paths, list/read files, and answer "
             f"\"what is the current project\" based on this directory.\n"
-            f"NOTE: GenericAgent's own source tree lives at {script_dir}; memory entries that mention paths like "
+            f"NOTE: Root's own source tree lives at {script_dir}; memory entries that mention paths like "
             f"'../memory', 'GA CodeRoot', or example cwd strings describe the agent framework itself, not the user's project. "
-            f"Do not assume the user is working on GenericAgent unless they say so or {script_dir} == the launch dir above.\n"
+            f"Do not assume the user is working on Root unless they say so or {script_dir} == the launch dir above.\n"
         )
     prompt += get_global_memory()
     return prompt
 
-class GenericAgent:
+class Root:
     def __init__(self):
         os.makedirs(os.path.join(script_dir, 'temp'), exist_ok=True)
         self.lock = threading.Lock()
@@ -155,7 +155,7 @@ class GenericAgent:
             
             sys_prompt = get_system_prompt() + getattr(self.llmclient.backend, 'extra_sys_prompt', '')
             if self.peer_hint: sys_prompt += f"\n[Peer] 用户提及其他会话/后台任务状态时: temp/model_responses/ (只找近期修改的文件尾部)\n"
-            handler = GenericAgentHandler(self, self.history, os.path.join(script_dir, 'temp'))
+            handler = RootHandler(self, self.history, os.path.join(script_dir, 'temp'))
             if self.handler and 'key_info' in self.handler.working: 
                 ki = re.sub(r'\n\[SYSTEM\] 此为.*?工作记忆[。\n]*', '', self.handler.working['key_info'])  # 去旧
                 handler.working['key_info'] = ki
@@ -195,7 +195,7 @@ class GenericAgent:
                 self.task_queue.task_done()
                 if self.handler is not None: self.handler.code_stop_signal.append(1)
 
-GeneraticAgent = GenericAgent    
+GeneraticAgent = Root    
 
 if __name__ == '__main__':
     import argparse
@@ -292,7 +292,7 @@ if __name__ == '__main__':
             try: model = agent.get_llm_name(model=True) or '?'
             except Exception: model = '?'
             try:
-                sys.stdout.write(f'\x1b[92m✦\x1b[0m \x1b[1mGenericAgent\x1b[0m '
+                sys.stdout.write(f'\x1b[92m✦\x1b[0m \x1b[1mRoot\x1b[0m '
                                  f'\x1b[90m· cli · model:\x1b[0m {model}\n')
                 sys.stdout.flush()
             except Exception: pass

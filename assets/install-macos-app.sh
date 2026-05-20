@@ -1,12 +1,12 @@
 #!/bin/bash
 
-# GenericAgent macOS Desktop App Installation Script
+# Root macOS Desktop App Installation Script
 #
 # Usage:
 #   bash assets/install-macos-app.sh [--auto]
 #
 # This installer creates a small .app bundle that opens Terminal and runs
-# `python3 launch.pyw` from the current GenericAgent checkout.
+# `python3 launch.pyw` from the current Root checkout.
 
 if [ -z "${BASH_VERSION}" ]; then
     if command -v bash >/dev/null 2>&1; then
@@ -32,7 +32,7 @@ for arg in "$@"; do
     esac
 done
 
-APP_NAME="GenericAgent"
+APP_NAME="Root"
 PRIMARY_INSTALL_DIR="/Applications"
 FALLBACK_INSTALL_DIR="${HOME}/Applications"
 
@@ -43,7 +43,7 @@ LAUNCH_SCRIPT="${PROJECT_ROOT}/launch.pyw"
 
 echo -e "${CYAN}"
 echo "╔═══════════════════════════════════════════════════════════╗"
-echo "║   GenericAgent — macOS Desktop App Installer             ║"
+echo "║   Root — macOS Desktop App Installer             ║"
 echo "╚═══════════════════════════════════════════════════════════╝"
 echo -e "${NC}"
 
@@ -84,7 +84,7 @@ fi
 
 if [ "${AUTO_MODE}" = false ]; then
     echo ""
-    echo "This will install a desktop app that launches GenericAgent"
+    echo "This will install a desktop app that launches Root"
     echo "from Spotlight, Launchpad, or the Applications folder."
     echo ""
     if [ -n "${existing_app_path}" ]; then
@@ -117,9 +117,9 @@ APPLESCRIPT
 
 osacompile -o "${TMP_DIR}/${APP_NAME}.app" "${TMP_DIR}/${APP_NAME}.applescript"
 
-log_info "Applying GenericAgent icon..."
+log_info "Applying Root icon..."
 if [ -f "${ICON_PATH}" ]; then
-    ICONSET_DIR="${TMP_DIR}/ga-icon.iconset"
+    ICONSET_DIR="${TMP_DIR}/rt-icon.iconset"
     mkdir -p "${ICONSET_DIR}"
 
     sips -z 16 16   "${ICON_PATH}" --out "${ICONSET_DIR}/icon_16x16.png"       >/dev/null 2>&1
@@ -133,8 +133,8 @@ if [ -f "${ICON_PATH}" ]; then
     sips -z 512 512 "${ICON_PATH}" --out "${ICONSET_DIR}/icon_512x512.png"     >/dev/null 2>&1
     cp "${ICON_PATH}" "${ICONSET_DIR}/icon_512x512@2x.png"
 
-    iconutil -c icns "${ICONSET_DIR}" -o "${TMP_DIR}/ga-icon.icns"
-    cp "${TMP_DIR}/ga-icon.icns" "${TMP_DIR}/${APP_NAME}.app/Contents/Resources/applet.icns"
+    iconutil -c icns "${ICONSET_DIR}" -o "${TMP_DIR}/rt-icon.icns"
+    cp "${TMP_DIR}/rt-icon.icns" "${TMP_DIR}/${APP_NAME}.app/Contents/Resources/applet.icns"
     log_success "Icon applied from assets/images/logo.jpg"
 else
     log_warning "Logo not found at ${ICON_PATH}, using default icon."
