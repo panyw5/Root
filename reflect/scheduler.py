@@ -67,7 +67,7 @@ def check():
         try:
             import sys; sys.path.insert(0, os.path.join(_dir, '../memory/L4_raw_sessions'))
             from compress_session import batch_process
-            raw_dir = os.path.join(_dir, '../temp/model_responses')
+            raw_dir = os.path.join(_dir, '../sandbox/model_responses')
             r = batch_process(raw_dir, dry_run=False)
             print(f'[L4 cron] {r}')
         except Exception as e:

@@ -8,7 +8,7 @@ Hive模式单独运行，不要和plan/supervisor/subagent混杂
 ## 启动
 
 1. 选一个空闲端口 `PORT` 和本次协作 key `BOARD_KEY`。
-2. 创建本次 Hive 数据目录：`BBS_CWD=<CodeRoot>/temp/hive_<目标短名>`。
+2. 创建本次 Hive 数据目录：`BBS_CWD=<CodeRoot>/sandbox/hive_<目标短名>`。
 3. 启动 BBS：`start /b python <CodeRoot>/assets/agent_bbs.py --cwd <BBS_CWD> --port <PORT> --key <BOARD_KEY>`。
 4. 按http://127.0.0.1:<PORT>/readme?key=<BOARD_KEY>，在bbs发第一个帖子，包括1.任务目标；2.以下的Hive Master职责；3.优先使用`<BBS_CWD>`进行文件传输而非bbs的文件功能；4.附加说明：`此为最终目标，worker不要接单，先等hive master拆分子任务。`
 5. 后台启动首个worker

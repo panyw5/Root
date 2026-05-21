@@ -37,7 +37,7 @@ def launch_frontend(cmd_parts, args=None):
     # (e.g. TUI's @file picker). Bash/cmd wrappers may have already set this;
     # otherwise capture the current cwd before we chdir into PROJECT_DIR.
     env = os.environ.copy()
-    env.setdefault("RT_USER_CWD", os.getcwd())
+    env.setdefault("RT_SESSION_CWD", os.getcwd())
 
     print(f"🚀 {' '.join(full_cmd)}")
     sys.stdout.flush()

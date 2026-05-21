@@ -12,7 +12,7 @@ MVP design notes:
 - One TUI manages multiple Root instances.
 - Root.put_task() returns a per-task display_queue; the TUI records a task_id for every submit.
 - Agent.run() and display_queue.get() run in daemon threads; UI updates are posted via App.call_from_thread().
-- Multiple sessions may run concurrently, but Root still shares project temp/memory/tool globals.
+- Multiple sessions may run concurrently, but Root still shares project sandbox/memory/tool globals.
 """
 from __future__ import annotations
 
@@ -50,13 +50,13 @@ if ROOT_DIR not in sys.path:
 
 # Honor the original invocation directory so users can launch the TUI from any
 # folder (e.g. `rt tui` inside a project). The `rt` shell wrapper / rt_cli set
-# RT_USER_CWD before chdir-ing into PROJECT_DIR. We re-enter that directory so
+# RT_SESSION_CWD before chdir-ing into PROJECT_DIR. We re-enter that directory so
 # the TUI's working directory (used by @file picker, relative paths, etc.) is
 # what the user expected, without breaking imports that target the project root.
-_user_cwd = os.environ.get("RT_USER_CWD")
-if _user_cwd and os.path.isdir(_user_cwd):
+_session_cwd = os.environ.get("RT_SESSION_CWD")
+if _session_cwd and os.path.isdir(_session_cwd):
     try:
-        os.chdir(_user_cwd)
+        os.chdir(_session_cwd)
     except OSError:
         pass
 
@@ -441,7 +441,7 @@ class RootTUI(App[None]):
     def _cmd_new(self, args: list[str]) -> None:
         name = " ".join(args).strip() or None
         session = self.add_session(name)
-        self._system(f"Created session #{session.agent_id} {session.name!r}. Shared temp/memory are not isolated.")
+        self._system(f"Created session #{session.agent_id} {session.name!r}. Shared sandbox/memory are not isolated.")
 
     def _cmd_branch(self, args: list[str]) -> None:
         import copy

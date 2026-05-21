@@ -40,8 +40,8 @@ FILE_HINT = "If you need to show files to user, use [FILE:filepath] in your resp
 TAG_PATS = [r"<" + t + r">.*?</" + t + r">" for t in ("thinking", "summary", "tool_use", "file_content")]
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RESTORE_GLOBS = (
-    os.path.join(PROJECT_ROOT, "temp", "model_responses", "model_responses_*.txt"),
-    os.path.join(PROJECT_ROOT, "temp", "model_responses_*.txt"),
+    os.path.join(PROJECT_ROOT, "sandbox", "model_responses", "model_responses_*.txt"),
+    os.path.join(PROJECT_ROOT, "sandbox", "model_responses_*.txt"),
 )
 RESTORE_BLOCK_RE = re.compile(
     r"^=== (Prompt|Response) ===.*?\n(.*?)(?=^=== (?:Prompt|Response) ===|\Z)",
@@ -246,7 +246,7 @@ def require_runtime(agent, label, **required):
 
 
 def redirect_log(script_file, log_name, label, allowed):
-    log_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(script_file))), "temp")
+    log_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(script_file))), "sandbox")
     os.makedirs(log_dir, exist_ok=True)
     logf = open(os.path.join(log_dir, log_name), "a", encoding="utf-8", buffering=1)
     sys.stdout = sys.stderr = logf

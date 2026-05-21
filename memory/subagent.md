@@ -2,11 +2,11 @@
 
 ## 文件IO协议
 
-- 目录：`temp/{task_name}/`（cwd在temp/时即`./{task_name}/`）
+- 目录：`sandbox/{task_name}/`（cwd在sandbox/时即`./{task_name}/`）
 - 启动：`python agentmain.py --task {name} [--input "短文本"] [--llm_no N]`（cwd=代码根）
 - `--input`自动建目录+清旧output+写input.txt；长文本先手动写input.txt再启动(不带--input)
 - 自动后台启动，print PID then exit
-- subagent的cwd还是temp，不是task目录
+- subagent的cwd还是sandbox，不是task目录
 - input：目标+约束即可，subagent同等智能。**禁写步骤/过度描述**，大量数据给路径
 - 可选fork功能（继承对话上下文）: code_run(inline_eval=True)，将变量history（自动注入,str）写入task目录下_history.json
 - 通信：output.txt(append,`[ROUND END]`=轮完成) → 写reply.txt继续 → 不写10min退出。reply后输出为output1/2/3.txt(同格式)
@@ -19,7 +19,7 @@
 **流程**：创建test_path/写input.txt→启动subagent→轮询output.txt(2秒间隔)→验证→清理重复
 **测试原则**：只给目标，不提示位置/不诱导做法，观察自主选择
 **修正闭环**：发现问题→设计测试→定位根源(RULES/L2/L3/SOP)→patch修正→验证
-**技术要点**：Insight优先级>SOP；subagent的cwd=temp/
+**技术要点**：Insight优先级>SOP；subagent的cwd=sandbox/
 **两种测试**：
 - 测SOP质量：input指定SOP名（如"用ezgmail_sop查看最近3封未读邮件"），排除导航干扰，失败即SOP问题
 - 测导航能力：input只写目标，验证subagent能自主从insight找到正确SOP。禁止内联SOP内容

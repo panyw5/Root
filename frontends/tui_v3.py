@@ -1076,7 +1076,7 @@ class SB:
         self._resized = False
         self._rb = b''; self._tail = b''; self._bp = False; self._pbytes = b''
         self.hist: list[str] = []; self._hi = -1
-        self._cwd = os.path.join(os.getcwd(), 'temp')
+        self._cwd = os.path.join(os.getcwd(), 'sandbox')
         self._pstore: dict[int, str] = {}; self._imgs: list[str | None] = []; self._pc = 0
         self._t0 = 0.0; self._spin = 0
         self._painted: list[str] = []
@@ -1860,7 +1860,7 @@ class SB:
                          '  /clear               清空上下文',
                          '  /cost                token 用量',
                          '  /verbose             工具调用审计(↑↓选 Enter切换 c复制 q退)',
-                         '  /export              导出最后回答到 temp',
+                         '  /export              导出最后回答到 sandbox',
                          '  /stop                中止当前任务',
                          '  /quit                退出',
                          '  Esc                  撤回提问 · 清草稿 · 停任务(不退出)',

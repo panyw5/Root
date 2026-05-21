@@ -3,7 +3,7 @@
 Run from project root:
     python frontends/tuiapp_v2.py
 
-Visual design carried from temp/GA_tui 设计/tui_demo.py;
+Visual design carried from sandbox/GA_tui 设计/tui_demo.py;
 functionality migrated from frontends/tuiapp.py plus new commands:
 - /btw       — side question (subagent, doesn't interrupt main)
 - /continue  — list / restore historical sessions
@@ -667,12 +667,12 @@ if FRONTENDS_DIR not in sys.path:
     sys.path.insert(0, FRONTENDS_DIR)
 
 # Honor the original invocation directory so users can launch the TUI from any
-# folder. rt_cli sets RT_USER_CWD before chdir-ing into PROJECT_DIR; we restore
+# folder. rt_cli sets RT_SESSION_CWD before chdir-ing into PROJECT_DIR; we restore
 # it here AFTER sys.path is set so imports still resolve from the project root.
-_user_cwd = os.environ.get("RT_USER_CWD")
-if _user_cwd and os.path.isdir(_user_cwd):
+_session_cwd = os.environ.get("RT_SESSION_CWD")
+if _session_cwd and os.path.isdir(_session_cwd):
     try:
-        os.chdir(_user_cwd)
+        os.chdir(_session_cwd)
     except OSError:
         pass
 
@@ -711,9 +711,9 @@ _THEME_CYCLE = ["rt-default", "nord", "gruvbox", "dracula", "tokyo-night", "text
 
 # ---------- persisted settings ----------
 # Lightweight JSON dropbox for cross-run UI state (theme, future toggles).
-# Lives under temp/ alongside model logs so it tracks the workspace.
+# Lives under sandbox/ alongside model logs so it tracks the workspace.
 _SETTINGS_PATH = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "..", "temp", "tui_settings.json"
+    os.path.dirname(os.path.abspath(__file__)), "..", "sandbox", "tui_settings.json"
 )
 
 def _load_settings() -> dict:
@@ -2737,7 +2737,7 @@ class RootTUI(App[None]):
 
         Token may contain '/'; the part up to (and including) the last '/' is the
         directory to list, and the remainder is the basename prefix filter.
-        Listing is rooted at the user's cwd (RT_USER_CWD is already chdir'd into).
+        Listing is rooted at the session cwd (RT_SESSION_CWD is already chdir'd into).
         """
         palette = self.query_one("#palette", OptionList)
         palette.clear_options()
@@ -3432,7 +3432,7 @@ class RootTUI(App[None]):
 
         def _sub_section() -> list[str]:
             if not sub or sub.total_tokens() == 0: return []
-            ls = ["", f"subagents (扫描 temp/*/stdout.log)"]
+            ls = ["", f"subagents (扫描 sandbox/*/stdout.log)"]
             ls.append(
                 f"  Token usage:     {_k(sub.total_tokens()):>7} total  "
                 f"({_k(sub.total_input_side())} input + {_k(sub.output)} output)"

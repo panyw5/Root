@@ -8,7 +8,7 @@ from datetime import datetime
 
 from continue_cmd import _pairs, _assistant_text
 
-_TEMP_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'temp')
+_TEMP_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'sandbox')
 _BACKTICK_RUN_RE = re.compile(r'`+')
 
 
@@ -60,9 +60,9 @@ def last_assistant_text(agent):
 
 
 def export_to_temp(text, name):
-    """Write text to temp/<name>.md, overwriting on collision. Returns full path.
+    """Write text to sandbox/<name>.md, overwriting on collision. Returns full path.
 
-    `name` is sanitized via os.path.basename to keep the write inside temp/.
+    `name` is sanitized via os.path.basename to keep the write inside sandbox/.
     Empty/whitespace name falls back to a timestamp. `.md` is appended if
     the user-supplied name has no extension.
     """

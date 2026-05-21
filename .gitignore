@@ -1,4 +1,5 @@
-temp/
+/sandbox/
+/temp
 tmp/
 
 __pycache__/

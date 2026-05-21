@@ -300,7 +300,7 @@ if prompt := st.chat_input("any task?"):
             result = (
                 "**选择导出方式：**\n\n"
                 "- `/export clip` — 整理到代码块中\n"
-                "- `/export <文件名>` — 导出到 `temp/<文件名>`（默认 .md 后缀）\n"
+                "- `/export <文件名>` — 导出到 `sandbox/<文件名>`（默认 .md 后缀）\n"
                 "- `/export all` — 显示完整对话日志路径"
             )
         elif sub_lower == "all":

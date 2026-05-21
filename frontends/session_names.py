@@ -1,12 +1,12 @@
 """Persistent display names for `/continue`-able sessions.
 
-JSON sidecar at `temp/model_responses/session_names.json` maps log-file
+JSON sidecar at `sandbox/model_responses/session_names.json` maps log-file
 basename → user name. Touched only by `/rename` and `/continue <name>`.
 """
 import glob, json, os, re, threading
 
 _LOG_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                        'temp', 'model_responses')
+                        'sandbox', 'model_responses')
 _REG_PATH = os.path.join(_LOG_DIR, 'session_names.json')
 _LOG_RE = re.compile(r'^model_responses_(\d+)\.txt$')
 _lock = threading.Lock()

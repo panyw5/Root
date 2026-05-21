@@ -1,5 +1,5 @@
 # reflect/goal_mode.py — Goal Mode: 持续自驱直到预算耗尽
-# 启动: set GOAL_STATE=temp/xxx.json && python agentmain.py --reflect reflect/goal_mode.py
+# 启动: set GOAL_STATE=sandbox/xxx.json && python agentmain.py --reflect reflect/goal_mode.py
 # 配置: agent按SOP写好state json，通过环境变量GOAL_STATE指定路径
 import os, json, time
 
@@ -10,7 +10,7 @@ _dir = os.path.dirname(os.path.abspath(__file__))
 STATE_FILE = ''
 def init(a):
     global STATE_FILE
-    STATE_FILE = a.get('goal_state') or os.environ.get('GOAL_STATE') or os.path.join(_dir, '../temp/goal_state.json')
+    STATE_FILE = a.get('goal_state') or os.environ.get('GOAL_STATE') or os.path.join(_dir, '../sandbox/goal_state.json')
     if not os.path.isabs(STATE_FILE): STATE_FILE = os.path.join(_dir, '..', STATE_FILE)
 # --- state 管理 ---
 def _load():

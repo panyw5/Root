@@ -94,13 +94,13 @@ def _resolve_stashed(p: str) -> Optional[str]:
     if not p: return None
     rel = p.lstrip("./\\")
     cwd = os.getcwd()
-    for c in (p, os.path.join(cwd, "temp", rel), os.path.join(cwd, rel)):
+    for c in (p, os.path.join(cwd, "sandbox", rel), os.path.join(cwd, rel)):
         if os.path.isfile(c) and os.path.getsize(c) > 0: return c
     return None
 
 
 # Strict per-session discovery — scan this session's own messages only.
-_PATH_RE = re.compile(r"""((?:\.\/)?(?:temp\/)?plan_[A-Za-z0-9_\-]+\/plan\.md)""")
+_PATH_RE = re.compile(r"""((?:\.\/)?(?:sandbox\/)?plan_[A-Za-z0-9_\-]+\/plan\.md)""")
 
 
 def _slice(messages, start_idx: int):

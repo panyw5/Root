@@ -3,7 +3,7 @@ Pure functions + one `install(cls)` monkey-patch entry. No side effects at impor
 """
 import ast, glob, json, os, re, time
 _LOG_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                        'temp', 'model_responses')
+                        'sandbox', 'model_responses')
 _LOG_GLOB = os.path.join(_LOG_DIR, 'model_responses_*.txt')
 _BLOCK_RE = re.compile(r'^=== (Prompt|Response) ===.*?\n(.*?)(?=^=== (?:Prompt|Response) ===|\Z)',
                        re.DOTALL | re.MULTILINE)

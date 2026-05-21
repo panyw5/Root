@@ -6,7 +6,7 @@ Trackers are keyed by `threading.current_thread().name`; each TUI session
 runs its agent on `rt-tui-agent-<id>`, so `/cost` is a thread lookup.
 
 Subagent processes are out-of-process, so `scan_subagent_logs` parses the
-same `[Cache]` / `[Output]` print lines from `temp/*/stdout.log`.
+same `[Cache]` / `[Output]` print lines from `sandbox/*/stdout.log`.
 """
 import glob, os, re, threading, time
 from dataclasses import dataclass, field
@@ -67,11 +67,11 @@ _OUT_RE = re.compile(r'\[Output\]\s+tokens=(\d+)')
 _CACHE_RE_NEW = re.compile(r'\[Cache\]\s+input=(\d+)\s+creation=(\d+)\s+read=(\d+)')
 _CACHE_RE_OLD = re.compile(r'\[Cache\]\s+input=(\d+)\s+cached=(\d+)')
 _INSTALLED = False
-_SUBAGENT_GLOB = os.path.join("temp", "*", "stdout.log")
+_SUBAGENT_GLOB = os.path.join("sandbox", "*", "stdout.log")
 
 
 def scan_subagent_logs(since: float = 0.0, root: str | None = None) -> TokenStats:
-    """Aggregate subagent tokens from `temp/<task>/stdout.log` files; pass
+    """Aggregate subagent tokens from `sandbox/<task>/stdout.log` files; pass
     `since=tui_start_time` to scope to this run. Best-effort: bad logs skipped."""
     out = TokenStats()
     if since > 0: out.started_at = since

@@ -9,7 +9,7 @@ from ultralytics import YOLO
 from PIL import Image, ImageDraw
 import numpy as np
 
-DEFAULT_MODEL = str(Path(__file__).resolve().parent.parent / 'temp' / 'weights' / 'icon_detect' / 'model.pt')
+DEFAULT_MODEL = str(Path(__file__).resolve().parent.parent / 'sandbox' / 'weights' / 'icon_detect' / 'model.pt')
 
 # 可选：使用rapidocr做OCR
 try:

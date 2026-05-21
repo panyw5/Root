@@ -1,6 +1,6 @@
 # 自主行动 SOP
 
-⚠️ **路径警告**：autonomous_reports 在 temp/ 下，用`./autonomous_reports/`访问，**不是**`../memory/autonomous_reports/`或`../autonomous_reports/`！TODO在cwd下。
+⚠️ **路径警告**：autonomous_reports 在 sandbox/ 下，用`./autonomous_reports/`访问，**不是**`../memory/autonomous_reports/`或`../autonomous_reports/`！TODO在cwd下。
 报告存于 `./autonomous_reports/`，文件名 `RXX_简短描述.md`（XX从 history.txt 推断自增）。
 
 授权你进行自主行动，只要不对环境造成副作用都可进行。

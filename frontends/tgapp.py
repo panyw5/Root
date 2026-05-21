@@ -1,6 +1,6 @@
 import os, sys, re, threading, asyncio, queue as Q, time, random, uuid
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-_TEMP_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'temp')
+_TEMP_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'sandbox')
 from agentmain import GeneraticAgent
 try:
     from telegram import BotCommand, InlineKeyboardButton, InlineKeyboardMarkup
@@ -1031,7 +1031,7 @@ async def handle_photo(update, ctx):
     else: return
     await file.download_to_drive(os.path.join(_TEMP_DIR, fpath))
     caption = update.message.caption
-    prompt = f"[TIPS] 收到{kind}temp/{fpath}\n{caption}" if caption else f"[TIPS] 收到{kind}temp/{fpath}，请等待下一步指令"
+    prompt = f"[TIPS] 收到{kind}sandbox/{fpath}\n{caption}" if caption else f"[TIPS] 收到{kind}sandbox/{fpath}，请等待下一步指令"
     dq = agent.put_task(prompt, source="telegram")
     task = asyncio.create_task(_stream(dq, update.message))
     ctx.user_data['stream_task'] = task

@@ -880,7 +880,7 @@ def _ensure_text_block(blocks):
 
 def _write_llm_log(label, content, log_path=None):
     if not log_path:
-        log_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), f'temp/model_responses/model_responses_{os.getpid()}.txt')
+        log_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), f'sandbox/model_responses/model_responses_{os.getpid()}.txt')
     os.makedirs(os.path.dirname(os.path.abspath(log_path)), exist_ok=True)
     ts = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     with open(log_path, 'a', encoding='utf-8', errors='replace') as f:

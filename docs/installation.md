@@ -193,7 +193,7 @@ uv pip install -e ".[ui]"
 
 If `git pull` reports conflicts:
 
-- For `mykey.py`, `memory/`, `skills/`, `temp/`, and user-created artifacts: prefer the local copy.
+- For `mykey.py`, `memory/`, `skills/`, `sandbox/`, and user-created artifacts: prefer the local copy.
 - For core code such as `agent*.py`, `frontends/*`, `reflect/*`, and `tools/*`: usually prefer upstream unless the user says otherwise.
 - Resolve explicitly, then `git add` and commit the merge.
 

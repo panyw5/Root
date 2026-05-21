@@ -236,7 +236,7 @@ def batch_process(src, l4_dir=None, dry_run=True):
     return report
 
 # ── CLI ──
-RAW_DIR = os.path.join(os.path.dirname(os.path.dirname(L4_DIR)), 'temp', 'model_responses')
+RAW_DIR = os.path.join(os.path.dirname(os.path.dirname(L4_DIR)), 'sandbox', 'model_responses')
 
 if __name__ == '__main__':
     import argparse

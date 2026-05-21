@@ -6,7 +6,7 @@
 
 ## 设置
 
-写 `temp/goal_state.json`（或自定义路径）：
+写 `sandbox/goal_state.json`（或自定义路径）：
 
 ```json
 {
@@ -29,14 +29,14 @@
 必须后台启动（长时间运行，不占前台终端）：
 
 ```bash
-# 默认路径 temp/goal_state.json
+# 默认路径 sandbox/goal_state.json
 start /b python agentmain.py --reflect reflect/goal_mode.py
 
 # 自定义路径（多实例）
-set GOAL_STATE=temp/goal_xxx.json && start /b python agentmain.py --reflect reflect/goal_mode.py
+set GOAL_STATE=sandbox/goal_xxx.json && start /b python agentmain.py --reflect reflect/goal_mode.py
 
 # 用其他模型跑（--llm_no 选择已配置的第N个LLM，从0开始）
-set GOAL_STATE=temp/goal_xxx.json && start /b python agentmain.py --reflect reflect/goal_mode.py --llm_no 1
+set GOAL_STATE=sandbox/goal_xxx.json && start /b python agentmain.py --reflect reflect/goal_mode.py --llm_no 1
 ```
 
 ## 停止
@@ -47,4 +47,4 @@ set GOAL_STATE=temp/goal_xxx.json && start /b python agentmain.py --reflect refl
 ## 观察进度
 
 - 状态：读 goal_state.json 的 `turns_used` / `status`
-- 详情：看 `temp/model_responses/` 下最近修改的文件尾部
+- 详情：看 `sandbox/model_responses/` 下最近修改的文件尾部

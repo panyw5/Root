@@ -37,18 +37,18 @@ def get_system_prompt():
     with open(os.path.join(script_dir, f'assets/sys_prompt{lang_suffix}.txt'), 'r', encoding='utf-8') as f: prompt = f.read()
     prompt += f"\nToday: {time.strftime('%Y-%m-%d %a')}\n"
     # Tell the model where the user actually invoked the agent from.
-    # tuiapp_v2 / rt_cli already os.chdir() into RT_USER_CWD, so os.getcwd()
+    # tuiapp_v2 / rt_cli already os.chdir() into RT_SESSION_CWD, so os.getcwd()
     # reflects the user's launch directory (e.g. ~/apps/opencode), not the
     # Root source tree. Without this hint the model treats the
     # framework's own memory/global_mem.txt paths as "the current project".
     try:
-        user_cwd = os.path.abspath(os.environ.get('RT_USER_CWD') or os.getcwd())
+        session_cwd = os.path.abspath(os.environ.get('RT_SESSION_CWD') or os.getcwd())
     except Exception:
-        user_cwd = os.getcwd()
-    if user_cwd and os.path.abspath(user_cwd) != os.path.abspath(script_dir):
+        session_cwd = os.getcwd()
+    if session_cwd and os.path.abspath(session_cwd) != os.path.abspath(script_dir):
         prompt += (
             f"\n[Session Workspace]\n"
-            f"User launched the agent from: {user_cwd}\n"
+            f"User launched the agent from: {session_cwd}\n"
             f"This is THIS session's active working directory; the Python process cwd is already chdir'd here. "
             f"Treat it as the user's current project root: resolve relative paths, list/read files, and answer "
             f"\"what is the current project\" based on this directory.\n"
@@ -61,7 +61,7 @@ def get_system_prompt():
 
 class Root:
     def __init__(self):
-        os.makedirs(os.path.join(script_dir, 'temp'), exist_ok=True)
+        os.makedirs(os.path.join(script_dir, 'sandbox'), exist_ok=True)
         self.lock = threading.Lock()
         self.task_dir = None
         self.history = []; self.handler = None; 
@@ -69,7 +69,7 @@ class Root:
         self.is_running = False; self.stop_sig = False; self.llm_no = 0;  
         self.inc_out = False; self.verbose = True; self.show_mode = 'text'
         self.peer_hint = True
-        self.log_path = os.path.join(script_dir, f'temp/model_responses/model_responses_{int(time.time()*1e6)%1000000:06d}.txt')
+        self.log_path = os.path.join(script_dir, f'sandbox/model_responses/model_responses_{int(time.time()*1e6)%1000000:06d}.txt')
         self.load_llm_sessions()
 
     def load_llm_sessions(self):
@@ -131,7 +131,7 @@ class Root:
         if not raw_query.startswith('/'): return raw_query
         if _sm := re.match(r'/session\.(\w+)=(.*)', raw_query.strip()):
             k, v = _sm.group(1), _sm.group(2)
-            vfile = os.path.join(script_dir, 'temp', v)
+            vfile = os.path.join(script_dir, 'sandbox', v)
             if os.path.isfile(vfile): v = open(vfile, encoding='utf-8').read().strip()
             try: v = json.loads(v)  # cover number parsing
             except (json.JSONDecodeError, ValueError): pass
@@ -154,8 +154,8 @@ class Root:
             self.history.append(f"[USER]: {rquery}")
             
             sys_prompt = get_system_prompt() + getattr(self.llmclient.backend, 'extra_sys_prompt', '')
-            if self.peer_hint: sys_prompt += f"\n[Peer] 用户提及其他会话/后台任务状态时: temp/model_responses/ (只找近期修改的文件尾部)\n"
-            handler = RootHandler(self, self.history, os.path.join(script_dir, 'temp'))
+            if self.peer_hint: sys_prompt += f"\n[Peer] 用户提及其他会话/后台任务状态时: sandbox/model_responses/ (只找近期修改的文件尾部)\n"
+            handler = RootHandler(self, self.history, os.path.join(script_dir, 'sandbox'))
             if self.handler and 'key_info' in self.handler.working: 
                 ki = re.sub(r'\n\[SYSTEM\] 此为.*?工作记忆[。\n]*', '', self.handler.working['key_info'])  # 去旧
                 handler.working['key_info'] = ki
@@ -213,7 +213,7 @@ if __name__ == '__main__':
     if args.task and not args.nobg:
         import subprocess, platform
         cmd = [sys.executable, os.path.abspath(__file__)] + [a for a in sys.argv[1:]] + ['--nobg']
-        d = os.path.join(script_dir, f'temp/{args.task}'); os.makedirs(d, exist_ok=True)
+        d = os.path.join(script_dir, f'sandbox/{args.task}'); os.makedirs(d, exist_ok=True)
         p = subprocess.Popen(cmd, cwd=script_dir,
             creationflags=0x08000000 if platform.system() == 'Windows' else 0,
             stdout=open(os.path.join(d, 'stdout.log'), 'w', encoding='utf-8'),
@@ -227,7 +227,7 @@ if __name__ == '__main__':
 
     if args.task:
         agent.peer_hint = False
-        agent.task_dir = d = os.path.join(script_dir, f'temp/{args.task}'); nround = ''
+        agent.task_dir = d = os.path.join(script_dir, f'sandbox/{args.task}'); nround = ''
         infile = os.path.join(d, 'input.txt')
         if args.input:
             os.makedirs(d, exist_ok=True)
@@ -277,7 +277,7 @@ if __name__ == '__main__':
             except Exception as e:
                 if getattr(mod, 'ONCE', False): raise
                 print(f'[Reflect] drain error: {e}'); result = f'[ERROR] {e}'
-            log_dir = os.path.join(script_dir, 'temp/reflect_logs'); os.makedirs(log_dir, exist_ok=True)
+            log_dir = os.path.join(script_dir, 'sandbox/reflect_logs'); os.makedirs(log_dir, exist_ok=True)
             script_name = os.path.splitext(os.path.basename(args.reflect))[0]
             open(os.path.join(log_dir, f'{script_name}_{datetime.now():%Y-%m-%d}.log'), 'a', encoding='utf-8').write(f'[{datetime.now():%m-%d %H:%M}]\n{result}\n\n')
             if (on_done := getattr(mod, 'on_done', None)):

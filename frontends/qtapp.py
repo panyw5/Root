@@ -465,7 +465,7 @@ def _build_prompt_with_uploads(prompt: str, files: list) -> tuple:
     if not files:
         return prompt, prompt, []
 
-    os.makedirs("temp/uploaded", exist_ok=True)
+    os.makedirs("sandbox/uploaded", exist_ok=True)
     attachment_chunks = ["\n\n[用户上传附件 — 文件已保存到本地磁盘，可用 file_read 工具读取]"]
     display_attachments = []
     img_count, file_names = 0, []
@@ -476,7 +476,7 @@ def _build_prompt_with_uploads(prompt: str, files: list) -> tuple:
         ext = os.path.splitext(name)[1].lower()
         safe = re.sub(r"[^A-Za-z0-9._\-]", "_", name)
         saved = os.path.join(
-            "temp", "uploaded",
+            "sandbox", "uploaded",
             f"{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}_{safe}",
         )
         try:

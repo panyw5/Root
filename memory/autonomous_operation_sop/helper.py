@@ -20,7 +20,7 @@ from datetime import datetime
 _MODULE_DIR = Path(__file__).resolve().parent          # memory/autonomous_operation_sop/
 _MEMORY_DIR = _MODULE_DIR.parent                       # memory/
 _AGENT_DIR = _MEMORY_DIR.parent                        # Root/
-_TEMP_DIR = _AGENT_DIR / "temp"                        # Root/temp/
+_TEMP_DIR = _AGENT_DIR / "sandbox"                        # Root/sandbox/
 _REPORTS_DIR = _TEMP_DIR / "autonomous_reports"
 _HISTORY_FILE = _REPORTS_DIR / "history.txt"
 _TODO_FILE = _TEMP_DIR / "TODO.txt"

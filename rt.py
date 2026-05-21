@@ -16,7 +16,7 @@ def code_run(code, code_type="python", timeout=60, cwd=None, code_cwd=None, stop
     优先使用python，仅在必要系统操作时使用powershell"""
     preview = (code[:60].replace('\n', ' ') + '...') if len(code) > 60 else code.strip()
     yield f"[Action] Running {code_type} in {os.path.basename(cwd)}: {preview}\n"
-    cwd = cwd or os.path.join(script_dir, 'temp'); tmp_path = None
+    cwd = cwd or os.path.join(script_dir, 'sandbox'); tmp_path = None
     if code_type in ["python", "py"]:
         tmp_file = tempfile.NamedTemporaryFile(suffix=".ai.py", delete=False, mode='w', encoding='utf-8', dir=code_cwd)
         cr_header = os.path.join(script_dir, 'assets', 'code_run_header.py')
@@ -261,7 +261,7 @@ def consume_file(dr, file):
 
 class RootHandler(BaseHandler):
     '''Generic Agent 工具库，包含多种工具的实现。工具函数自动加上了 do_ 前缀。实际工具名没有前缀。'''
-    def __init__(self, parent, last_history=None, cwd='./temp'):
+    def __init__(self, parent, last_history=None, cwd='./sandbox'):
         self.parent = parent
         self.working = {}
         self.cwd = cwd;  self.current_turn = 0
@@ -582,7 +582,7 @@ def get_global_memory():
         suffix = '_en' if os.environ.get('GA_LANG', '') == 'en' else ''
         with open(os.path.join(script_dir, 'memory/global_mem_insight.txt'), 'r', encoding='utf-8', errors='replace') as f: insight = f.read()
         with open(os.path.join(script_dir, f'assets/insight_fixed_structure{suffix}.txt'), 'r', encoding='utf-8') as f: structure = f.read()
-        prompt += f'cwd = {os.path.join(script_dir, "temp")} (./)\n'
+        prompt += f'sandbox_path = {os.path.join(script_dir, "sandbox")} (./)  # 用户提到"当前项目"/"this project"时通常指此 session workspace\n'
         prompt += f"\n[Memory] (../memory)\n"
         prompt += structure + '\n../memory/global_mem_insight.txt:\n'
         prompt += insight + "\n"

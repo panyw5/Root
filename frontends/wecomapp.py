@@ -34,7 +34,7 @@ SECRET    = str(mykeys.get("wecom_secret", "") or "").strip()
 WELCOME   = str(mykeys.get("wecom_welcome_message", "") or "").strip()
 ALLOWED   = {str(x).strip() for x in mykeys.get("wecom_allowed_users", []) if str(x).strip()}
 PORT      = 19531                # single-instance lock port
-TEMP_DIR  = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "temp")
+TEMP_DIR  = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "sandbox")
 MEDIA_DIR = os.path.join(TEMP_DIR, "media")
 IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp", ".svg"}
 
