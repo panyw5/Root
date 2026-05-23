@@ -1700,9 +1700,9 @@ def render_topbar(session_name: str, status: str, model: str, tasks_running: int
     # The OS terminal tab title carries the session name separately — see
     # RootTUI._update_terminal_title.
     t = Table.grid(expand=True)
-    # Equal column widths so the middle column's geometric center sits at the
-    # window center. Uneven ratios shift the centered band off-axis.
-    t.add_column(ratio=1, justify="left", no_wrap=True, overflow="ellipsis")
+    # 2:1:1 gives the left column enough room for the cwd path while keeping
+    # the model chip roughly centered.  Full 1:1:1 left the cwd starved.
+    t.add_column(ratio=2, justify="left", no_wrap=True, overflow="ellipsis")
     t.add_column(ratio=1, justify="center", no_wrap=True, overflow="ellipsis")
     t.add_column(ratio=1, justify="right", no_wrap=True)
 
@@ -1714,7 +1714,29 @@ def render_topbar(session_name: str, status: str, model: str, tasks_running: int
     left.append("  ·  ", style=C_DIM)
     left.append("session: ", style=C_MUTED); left.append(short_name, style=f"bold {C_CHIP_NAME}")
     if cwd:
-        short_cwd = cwd if len(cwd) <= 30 else "…" + cwd[-29:]
+        _CWD_MAX = 50
+        if len(cwd) <= _CWD_MAX:
+            short_cwd = cwd
+        else:
+            # Ensure the trailing directory name (basename) is always fully visible.
+            # Show "…/…mid/…basename" — keep the end, guarantee basename intact.
+            base = os.path.basename(cwd)
+            parent = cwd[: len(cwd) - len(base)].rstrip("/")
+            budget = _CWD_MAX - len(base) - 3  # 3 for "…/…"
+            if budget < 5:
+                short_cwd = "…" + cwd[-(_CWD_MAX - 1):]
+            else:
+                tail = parent[-budget:].lstrip("/")
+                short_cwd = "…/" + tail + "/" + base
+                # Safety: lstrip may not trim enough in edge cases
+                if len(short_cwd) > _CWD_MAX:
+                    over = len(short_cwd) - _CWD_MAX
+                    tail_budget = max(0, len(tail) - over)
+                    if tail_budget > 0:
+                        tail = parent[-tail_budget:].lstrip("/")
+                        short_cwd = "…/" + tail + "/" + base
+                    else:
+                        short_cwd = "…" + cwd[-(_CWD_MAX - 1):]
         left.append("  ·  ", style=C_DIM)
         left.append("cwd: ", style=C_MUTED); left.append(short_cwd, style=C_CHIP_NAME)
     left.append("  ·  ", style=C_DIM)
