@@ -71,6 +71,11 @@ COMMANDS = {
         "desc": "启动新版滚屏式终端界面 (tui_v3，scrollback-first，单文件实现)，纯终端/SSH 推荐",
         "cmd": ["python", "{FRONTENDS}/tui_v3.py"],
     },
+    "tui3": {
+        "help": "启动新版终端 TUI (tui_v3)",
+        "desc": "等同于 rt tui，指向 frontends/tui_v3.py",
+        "cmd": ["python", "{FRONTENDS}/tui_v3.py"],
+    },
     "tui-v3": {
         "help": "启动新版终端 TUI (tui_v3，显式别名)",
         "desc": "等同于 rt tui，指向 frontends/tui_v3.py",
@@ -178,6 +183,7 @@ def main():
               rt web               启动 Web 增强版
               rt web --native      启动 Web 基础版(桌面壳)
               rt tui               启动新版终端 TUI (v3, scrollback-first)
+              rt tui3              同上 (简写别名)
               rt tui-v2            启动 Textual v2 终端 TUI
               rt tui-legacy        启动旧版 Textual TUI
               rt pet               启动桌面宠物 v2
