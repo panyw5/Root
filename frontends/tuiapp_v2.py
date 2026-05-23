@@ -1692,7 +1692,8 @@ def render_status_chip(busy: bool, elapsed: int = 0) -> Text:
 def render_topbar(session_name: str, status: str, model: str, tasks_running: int,
                   fold_mode: bool = True, busy_elapsed: int = 0,
                   effort: str = "", sess_elapsed: int = 0,
-                  just_done: bool = False, term_width: int = 0) -> Table:
+                  just_done: bool = False, term_width: int = 0,
+                  cwd: str = "") -> Table:
     # Layout: identity-chip + session + status + fold packed LEFT; model + effort
     # + tasks CENTERED; clock RIGHT. The 2:2:1 ratio keeps the centered model
     # chip visually anchored even when the left column has the long status pill.
@@ -1712,6 +1713,10 @@ def render_topbar(session_name: str, status: str, model: str, tasks_running: int
     left.append_text(render_status_chip(busy=tasks_running > 0, elapsed=busy_elapsed))
     left.append("  ·  ", style=C_DIM)
     left.append("session: ", style=C_MUTED); left.append(short_name, style=f"bold {C_CHIP_NAME}")
+    if cwd:
+        short_cwd = cwd if len(cwd) <= 30 else "…" + cwd[-29:]
+        left.append("  ·  ", style=C_DIM)
+        left.append("cwd: ", style=C_MUTED); left.append(short_cwd, style=C_CHIP_NAME)
     left.append("  ·  ", style=C_DIM)
     if status == "running":
         dot_color = _heat_color(sess_elapsed)
@@ -4103,7 +4108,7 @@ class RootTUI(App[None]):
             render_topbar(s.name, s.status, model, tasks_running,
                           fold_mode=self.fold_mode, busy_elapsed=elapsed, effort=effort,
                           sess_elapsed=sess_elapsed, just_done=just_done,
-                          term_width=term_w))
+                          term_width=term_w, cwd=os.getcwd()))
         self._ensure_title_timer()
         self._update_terminal_title()
 
