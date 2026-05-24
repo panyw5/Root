@@ -6,6 +6,17 @@ if sys.stderr is None: sys.stderr = open(os.devnull, "w")
 elif hasattr(sys.stderr, 'reconfigure'): sys.stderr.reconfigure(errors='replace')
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
+def _safe_debug_log(message):
+    """Best-effort debug logging; never let closed stdout break agent flow."""
+    try:
+        print(message, flush=True)
+    except BrokenPipeError:
+        pass
+    except OSError as e:
+        if getattr(e, 'errno', None) != 32: raise
+    except ValueError as e:
+        if 'closed' not in str(e).lower(): raise
+
 from llmcore import reload_mykeys, ToolClient, MixinSession, NativeToolClient, NativeClaudeSession, NativeOAISession, resolve_client
 from agent_loop import agent_runner_loop
 try:
@@ -174,7 +185,7 @@ class Root:
                     if consume_file(self.task_dir, '_stop'): self.abort()
                     if self.stop_sig: break
                     if isinstance(chunk, dict) and 'tool_event' in chunk:
-                        print(f"[DEBUG agentmain] Received tool_event, putting to display_queue: {chunk}", flush=True)
+                        _safe_debug_log(f"[DEBUG agentmain] Received tool_event, putting to display_queue: {chunk}")
                         display_queue.put(chunk); continue
                     if isinstance(chunk, dict) and 'turn' in chunk:
                         curr_turn = chunk['turn']; turn_resps.append(''); continue

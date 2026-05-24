@@ -3,6 +3,17 @@ from dataclasses import dataclass
 from typing import Any, Optional
 try: from plugins.hooks import trigger as _hook
 except ImportError: _hook = lambda *a, **k: None
+
+def _safe_debug_log(message):
+    """Best-effort debug logging; never let closed stdout break agent flow."""
+    try:
+        print(message, flush=True)
+    except BrokenPipeError:
+        pass
+    except OSError as e:
+        if getattr(e, 'errno', None) != 32: raise
+    except ValueError as e:
+        if 'closed' not in str(e).lower(): raise
 @dataclass
 class StepOutcome:
     data: Any
@@ -79,7 +90,7 @@ def agent_runner_loop(client, system_prompt, user_input, handler, tools_schema,
                 else: yield f"🛠️ {tool_name}({_compact_tool_args(tool_name, args)})\n\n\n"
                 # Emit tool start event
                 tool_event = {'tool_event': {'type': 'tool_start', 'tool': tool_name, 'input': args, 'id': tid or f'tool_{turn}_{ii}'}}
-                print(f"[DEBUG agent_loop] Yielding tool_start event: {tool_event}", flush=True)
+                _safe_debug_log(f"[DEBUG agent_loop] Yielding tool_start event: {tool_event}")
                 yield tool_event
             handler.current_turn = turn
             gen = handler.dispatch(tool_name, args, response, index=ii, tool_num=len(tool_calls))
@@ -95,7 +106,7 @@ def agent_runner_loop(client, system_prompt, user_input, handler, tools_schema,
             if tool_name != 'no_tool':
                 tool_status = 'error' if outcome.next_prompt and outcome.next_prompt.startswith('未知工具') else 'completed'
                 tool_event = {'tool_event': {'type': 'tool_done', 'tool': tool_name, 'id': tid or f'tool_{turn}_{ii}', 'output': outcome.data, 'status': tool_status, 'metadata': {}}}
-                print(f"[DEBUG agent_loop] Yielding tool_done event: {tool_event}", flush=True)
+                _safe_debug_log(f"[DEBUG agent_loop] Yielding tool_done event: {tool_event}")
                 yield tool_event
 
             if outcome.should_exit:
