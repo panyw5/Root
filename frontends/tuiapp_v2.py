@@ -1706,13 +1706,9 @@ def render_topbar(session_name: str, status: str, model: str, tasks_running: int
     t.add_column(ratio=1, justify="center", no_wrap=True, overflow="ellipsis")
     t.add_column(ratio=1, justify="right", no_wrap=True)
 
-    short_name = session_name if len(session_name) <= 20 else session_name[:19] + "…"
-
-    # LEFT: identity chip · session · status
+    # LEFT: identity chip · cwd · status
     left = Text()
     left.append_text(render_status_chip(busy=tasks_running > 0, elapsed=busy_elapsed))
-    left.append("  ·  ", style=C_DIM)
-    left.append("session: ", style=C_MUTED); left.append(short_name, style=f"bold {C_CHIP_NAME}")
     if cwd:
         _CWD_MAX = 50
         if len(cwd) <= _CWD_MAX:
