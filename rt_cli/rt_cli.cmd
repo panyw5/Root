@@ -1,3 +1,5 @@
 @echo off
 cd /d "%~dp0.."
-python -m rt_cli %*
+set "PY=.venv\Scripts\python.exe"
+if not exist "%PY%" set "PY=python"
+"%PY%" -m rt_cli %*
