@@ -377,7 +377,7 @@ You're also welcome to join the **Root Community Group** for discussion, feedbac
 <div align="center">
   <table>
     <tr>
-      <td align="center"><strong>WeChat Group 19</strong><br/><img src="assets/images/wechat_group19.jpg" alt="WeChat Group 19 QR" width="240"/></td>
+      <td align="center"><strong>WeChat Group 20</strong><br/><img src="assets/images/wechat_group20.jpg" alt="WeChat Group 20 QR" width="240"/></td>
     </tr>
   </table>
 </div>
@@ -751,7 +751,7 @@ Root 通过 **分层记忆 × 最小工具集 × 自主执行循环** 完成复�
 <div align="center">
   <table>
     <tr>
-      <td align="center"><strong>微信群 19</strong><br/><img src="assets/images/wechat_group19.jpg" alt="微信群 19 二维码" width="240"/></td>
+      <td align="center"><strong>微信群 20</strong><br/><img src="assets/images/wechat_group20.jpg" alt="微信群 20 二维码" width="240"/></td>
     </tr>
   </table>
 </div>
