@@ -73,6 +73,10 @@ def get_system_prompt():
     prompt += get_global_memory()
     return prompt
 
+# SDK:
+# agent = Root(); threading.Thread(target=agent.run, daemon=True).start()
+# output1_queue = agent.put_task(prompt1)
+# output2_queue = agent.put_task(prompt2)
 class Root:
     def __init__(self):
         os.makedirs(os.path.join(script_dir, 'sandbox'), exist_ok=True)
@@ -84,7 +88,8 @@ class Root:
         self.inc_out = False; self.verbose = True; self.show_mode = 'text'
         self.peer_hint = True
         self.force_non_stream = False
-        self.log_path = os.path.join(script_dir, f'sandbox/model_responses/model_responses_{int(time.time()*1e6)%1000000:06d}.txt')
+        logid = f'{(time.time_ns() + random.randrange(1_000_000)) % 1_000_000:06d}'
+        self.log_path = os.path.join(script_dir, f'sandbox/model_responses/model_responses_{logid}.txt')
         self.load_llm_sessions()
 
     def load_llm_sessions(self):
@@ -160,12 +165,13 @@ class Root:
     def run(self):
         while True:
             task = self.task_queue.get()
+            if isinstance(task, str): break
             raw_query, source, display_queue = task["query"], task["source"], task["output"]
             raw_query = self._handle_slash_cmd(raw_query, display_queue)
             if raw_query is None:
                 self.task_queue.task_done(); continue
             self.is_running = True
-            if len(raw_query) > 1500:
+            if len(raw_query) > 2000:
                 task_file = os.path.join(script_dir, 'temp', f'user_prompt_{int(time.time())}.md')
                 with open(task_file, 'w', encoding='utf-8') as f: f.write(raw_query)
                 raw_query = f'Long user prompt saved to {task_file}. Read and execute.'
@@ -175,6 +181,7 @@ class Root:
             sys_prompt = get_system_prompt() + getattr(self.llmclient.backend, 'extra_sys_prompt', '')
             if self.peer_hint: sys_prompt += f"\n[Peer] 用户提及其他会话/后台任务状态时: sandbox/model_responses/ (只找近期修改的文件尾部)\n"
             handler = RootHandler(self, self.history, os.path.join(script_dir, 'sandbox'))
+            if getattr(self, 'no_print', False): handler.print = lambda *a, **k: None
             if self.handler and 'key_info' in self.handler.working:
                 ki = re.sub(r'\n\[SYSTEM\] 此为.*?工作记忆[。\n]*', '', self.handler.working['key_info'])  # 去旧
                 handler.working['key_info'] = ki

@@ -59,6 +59,7 @@ try:
     from textual.app import App, ComposeResult
     from textual.binding import Binding
     from textual.containers import Horizontal, Vertical, VerticalScroll
+    from textual.geometry import Region
     from textual.message import Message
     from textual.screen import ModalScreen
     from textual.widget import Widget
@@ -1075,17 +1076,28 @@ Screen { background: $rt-bg; color: $rt-fg; }
 
 #body { height: 1fr; }
 
-#sidebar {
+/* Outer scroll container owns the geometry (width/height/border) and the
+   scrolling; the inner #sidebar Static keeps the padding so the click
+   hit-test math in on_click (event.y - 3) is unchanged. */
+#sidebar-scroll {
     width: 34;
     height: 100%;
     background: $rt-bg;
     border-right: solid $rt-alt-bg;
-    /* Hide the scrollbar; the wheel still scrolls. Keeps the original look. */
-    scrollbar-size: 0 0;
-    scrollbar-background: $rt-bg;
-    scrollbar-color: $rt-bg;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-size: 0 1;
+    /* Reserve the 1-col scrollbar gutter up front so overflowing the window
+       doesn't suddenly squeeze the session rows narrower. */
+    scrollbar-gutter: stable;
 }
-#sidebar.-hidden, #sidebar.-narrow { display: none; }
+#sidebar-scroll.-hidden, #sidebar-scroll.-narrow { display: none; }
+
+#sidebar {
+    width: 1fr;
+    height: auto;
+    padding: 1 2;
+}
 
 /* Padding lives on the inner content so the click-to-select math
    (which subtracts header rows) stays correct regardless of scroll. */
@@ -2920,11 +2932,9 @@ class RootTUI(App[None]):
     def compose(self) -> ComposeResult:
         yield Static("", id="topbar")
         with Horizontal(id="body"):
-            # Wrap the sidebar Static in a VerticalScroll so the session list
-            # responds to the mouse wheel when there are more sessions than fit
-            # on screen. The inner #sidebar-content holds the rendered Table.
-            with VerticalScroll(id="sidebar"):
-                yield Static("", id="sidebar-content")
+            _sidebar = VerticalScroll(Static("", id="sidebar"), id="sidebar-scroll")
+            _sidebar.can_focus = False
+            yield _sidebar
             with Vertical(id="main"):
                 yield VerticalScroll(id="messages")
                 yield Static("", id="planbar")
@@ -2960,10 +2970,7 @@ class RootTUI(App[None]):
         # Disable alternate scroll mode (?1007). Textual enables ?1006 SGR mouse but doesn't
         # turn off ?1007, which on macOS Terminal / iTerm2 makes the wheel emit both mouse
         # events and ↑/↓ keys — triggering InputArea history nav.
-        try:
-            sys.__stdout__.write("\x1b[?1007l"); sys.__stdout__.flush()
-        except Exception:
-            pass
+        self._term_write("\x1b[?1007l")
 
     def _tick(self) -> None:
         # 0.5s poll: refresh clock + detect resizes Windows misses (snap, fullscreen).
@@ -3122,17 +3129,10 @@ class RootTUI(App[None]):
         self._refresh_all()
 
     def copy_to_clipboard(self, text: str) -> None:
-        """Override Textual's OSC 52 clipboard (broken on macOS Terminal.app).
-        Use pbcopy on macOS, fall back to OSC 52 on other platforms."""
-        import sys, subprocess as _sp
-        if sys.platform == "darwin":
-            try:
-                _sp.Popen(["pbcopy"], stdin=_sp.PIPE, stdout=_sp.DEVNULL, stderr=_sp.DEVNULL).communicate(text.encode("utf-8"))
-                self._clipboard = text
-                return
-            except Exception:
-                pass
-        # Non-macOS or pbcopy failed: fall back to Textual default (OSC 52)
+        self._clipboard = text
+        _ssh = os.environ.get("SSH_CONNECTION") or os.environ.get("SSH_TTY")
+        if not _ssh and _copy_to_clipboard(text):
+            return
         super().copy_to_clipboard(text)
 
     def action_handle_ctrl_c(self) -> None:
@@ -3211,7 +3211,7 @@ class RootTUI(App[None]):
         # via a short timer (call_after_refresh alone races the layout and the
         # remount can capture the old content_region.width — leaving messages
         # wrapped at the previous width after Ctrl+B).
-        sidebar = self.query_one("#sidebar", VerticalScroll)
+        sidebar = self.query_one("#sidebar-scroll", VerticalScroll)
         sidebar.toggle_class("-hidden")
         for sess in self.sessions.values():
             for m in sess.messages:
@@ -3486,7 +3486,7 @@ class RootTUI(App[None]):
 
     def _apply_responsive_layout(self) -> None:
         try:
-            sidebar = self.query_one("#sidebar", VerticalScroll)
+            sidebar = self.query_one("#sidebar-scroll", VerticalScroll)
             main = self.query_one("#main", Vertical)
         except Exception:
             return
@@ -4824,7 +4824,9 @@ class RootTUI(App[None]):
         self._system("\n".join(lines))
 
     def _reset_terminal_title(self) -> None:
-        # Send via sys.__stdout__ — see _update_terminal_title for why.
+        # Direct write on purpose: this runs at teardown when frames have stopped
+        # (so there's no writer-thread race to avoid) and the driver may already
+        # be stopped (enqueued writes would be silently dropped). See _term_write.
         try:
             out = sys.__stdout__
             out.write("\x1b]0;\x07")
@@ -5542,6 +5544,30 @@ class RootTUI(App[None]):
         self._ensure_title_timer()
         self._update_terminal_title()
 
+    def _term_write(self, data: str) -> None:
+        """Emit a raw control sequence to the terminal THROUGH Textual's driver.
+
+        Direct sys.__stdout__ writes race Textual's background WriterThread at the
+        byte level: an OSC/control sequence injected mid-frame splits one of
+        Textual's own escape sequences, and the terminal renders the wreckage as
+        flashing ANSI garbage (cleared by the next frame). Reproduces reliably by
+        switching sessions while streaming, when the title ticker fires often.
+        Routing through self._driver.write enqueues the sequence on the same
+        serialized writer queue as the frames, so it lands atomically between
+        them. Falls back to __stdout__ before the driver exists / in headless.
+        """
+        drv = getattr(self, "_driver", None)
+        if drv is not None:
+            try:
+                drv.write(data)
+                return
+            except Exception:
+                pass
+        try:
+            sys.__stdout__.write(data); sys.__stdout__.flush()
+        except Exception:
+            pass
+
     def _update_terminal_title(self) -> None:
         # OSC 0 (set window + icon title). Mainstream terminals consume it: Windows
         # Terminal, mintty (MinGW64/MSYS), iTerm2, Terminal.app, kitty, alacritty,
@@ -5560,12 +5586,8 @@ class RootTUI(App[None]):
             title = f"{name} · Root"
         if title == self._last_title: return
         self._last_title = title
-        try:
-            out = sys.__stdout__
-            out.write(f"\x1b]0;{title}\x07")
-            out.flush()
-        except Exception:
-            pass
+        # Serialize through the driver — see _term_write for the race this avoids.
+        self._term_write(f"\x1b]0;{title}\x07")
 
     def _ensure_title_timer(self) -> None:
         busy = any(x.status == "running" for x in self.sessions.values())
@@ -5600,7 +5622,28 @@ class RootTUI(App[None]):
 
     def _refresh_sidebar(self):
         if not self.is_mounted: return
-        self.query_one("#sidebar-content", Static).update(render_sidebar(self.sessions, self.current_id))
+        self.query_one("#sidebar", Static).update(render_sidebar(self.sessions, self.current_id))
+        self._scroll_active_session_into_view()
+
+    def _scroll_active_session_into_view(self) -> None:
+        # Keyboard session-switching (ctrl+up/down) can land on a session below
+        # the fold; mirror on_click's row math to bring its block into view.
+        if self.current_id is None:
+            return
+        try:
+            scroll = self.query_one("#sidebar-scroll", VerticalScroll)
+        except Exception:
+            return
+        y = 3  # pad-top(1) + "SESSIONS"(1) + blank(1), matches on_click
+        for sid, sess in self.sessions.items():
+            rows = 3
+            if _sidebar_last_user(sess): rows += 1
+            if _sidebar_last_summary(sess): rows += 1
+            if sid == self.current_id:
+                self.call_after_refresh(scroll.scroll_to_region,
+                                        Region(0, y, 1, rows), animate=False)
+                return
+            y += rows
 
     def _at_bottom(self, container) -> bool:
         try:
